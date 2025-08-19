@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("3cCcbepHRWN2Pg2GvooMzpiUxuoFC2jAehLW5PKoSe86");
+declare_id!("9wBsuUoZ4GD6YDvhVWabwUwF6SVjGWryVXKpPGUtrgrW");
 
 const MAX_FEE_BPS: u16 = 2000; // 20%
 const MAX_TITLE_LEN: usize = 64;
@@ -256,7 +257,7 @@ pub mod friends_bets {
                 Transfer {
                     from: ctx.accounts.vault.to_account_info(),
                     to: ctx.accounts.user_token_account.to_account_info(),
-                    authority: market.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
                 },
                 signer,
             );
@@ -316,7 +317,7 @@ pub mod friends_bets {
                 Transfer {
                     from: ctx.accounts.vault.to_account_info(),
                     to: ctx.accounts.creator_token_account.to_account_info(),
-                    authority: market.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
                 },
                 signer,
             );
@@ -432,6 +433,7 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
+    #[account(mut)]
     pub market: Account<'info, Market>,
 
     #[account(

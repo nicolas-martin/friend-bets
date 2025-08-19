@@ -1,11 +1,12 @@
 [toolchain]
+anchor_version = "0.31.1"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.testnet]
-friends_bets = "3cCcbepHRWN2Pg2GvooMzpiUxuoFC2jAehLW5PKoSe86"
+friends_bets = "9wBsuUoZ4GD6YDvhVWabwUwF6SVjGWryVXKpPGUtrgrW"
 
 [registry]
 url = "https://api.apr.dev"
