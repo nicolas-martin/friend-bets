@@ -2,13 +2,30 @@ NETWORK ?= https://api.testnet.solana.com
 PROGRAM_NAME ?= friends_bets
 IDL_OUT ?= packages/contracts/idl
 
-.PHONY: help dev backend frontend solana-testnet build deploy idl proto init-market place-bet resolve claim close-betting cancel-expired
+.PHONY: help dev backend frontend db-up db-down db-logs db-reset solana-testnet build deploy idl proto init-market place-bet resolve claim close-betting cancel-expired
 
 help: ## Show available targets
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
 
-dev: ## Run both backend and frontend in development mode
+db-up: ## Start PostgreSQL database
+	docker-compose up -d postgres
+	@echo "Waiting for database to be ready..."
+	@sleep 5
+
+db-down: ## Stop PostgreSQL database  
+	docker-compose down
+
+db-logs: ## View database logs
+	docker-compose logs -f postgres
+
+db-reset: ## Reset database (WARNING: destroys all data)
+	docker-compose down -v
+	docker-compose up -d postgres
+	@echo "Database reset complete"
+
+dev: ## Run both backend and frontend in development mode (starts database first)
+	@make db-up
 	@echo "Starting backend and frontend..."
 	@make backend & make frontend & wait
 
@@ -17,6 +34,9 @@ backend: ## Run the Go backend server
 
 frontend: ## Run the React Native web frontend
 	cd apps/web && npm run dev
+
+frontend-no-watch: ## Run frontend without file watching (if EMFILE issues persist)
+	cd apps/web && npm run dev-no-watch
 
 solana-testnet: ## Set Solana CLI to testnet
 	solana config set --url $(NETWORK)

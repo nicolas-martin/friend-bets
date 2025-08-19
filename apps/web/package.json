@@ -5,7 +5,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "dev": "expo start --web",
+    "dev": "ulimit -n 4096 && expo start --web --port 8082",
+    "dev-no-watch": "EXPO_NO_WEB_SETUP=true expo export:embed --platform web --dev && npx serve web-build --listen 8082",
     "build": "expo export --platform web",
     "build:prod": "expo export --platform web --output-dir dist --minify",
     "preview": "npx serve dist",

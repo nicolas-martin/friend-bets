@@ -50,5 +50,6 @@
     "node_modules",
     "dist",
     ".expo"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

@@ -1,0 +1,11 @@
+{
+  "ignore_dirs": [
+    "node_modules",
+    ".expo",
+    ".git", 
+    "dist",
+    "web-build",
+    "../backend",
+    "../../packages"
+  ]
+}

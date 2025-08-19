@@ -1,0 +1,53 @@
+# Friend Bets Backend Configuration - Development
+
+# Server configuration
+server:
+    host: "localhost"
+    port: 8080
+    cors:
+        allowed_origins:
+            - "http://localhost:8082" # Frontend development server on port 8082
+            - "http://localhost:3000"
+        allowed_headers:
+            - "Authorization"
+            - "Content-Type"
+            - "X-CSRF-Token"
+            - "X-Requested-With"
+
+# Database configuration
+database:
+    url: "postgres://friend_bets_user:friend_bets_password@localhost:5433/friend_bets?sslmode=disable"
+    max_conns: 25
+    max_idle_time: "30m"
+
+# Solana blockchain configuration
+solana:
+    rpc_url: "https://api.devnet.solana.com"
+    program_id: "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS" # From solana.ts
+    maintenance_key_path: "./keys/maintenance-keypair.json"
+    confirmation_mode: "confirmed"
+
+# Background worker configuration
+worker:
+    enabled: false # Disable for development
+    check_interval_sec: 60
+    auto_close_enabled: false
+    auto_cancel_enabled: false
+    indexer_enabled: false
+    indexer_start_slot: 0
+
+# Notification service configuration - disabled for dev
+notify:
+    smtp:
+        host: ""
+        port: 587
+        username: ""
+        password: ""
+        from: ""
+
+# Rate limiting configuration - relaxed for development
+rate:
+    create_market_per_hour: 1000
+    place_bet_per_minute: 1000
+    ip_rate_per_minute: 1000
+
