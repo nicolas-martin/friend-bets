@@ -35,9 +35,6 @@ backend: ## Run the Go backend server
 frontend: ## Run the React Native web frontend
 	cd apps/web && npm run dev
 
-frontend-no-watch: ## Run frontend without file watching (if EMFILE issues persist)
-	cd apps/web && npm run dev-no-watch
-
 solana-testnet: ## Set Solana CLI to testnet
 	solana config set --url $(NETWORK)
 

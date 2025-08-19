@@ -15,6 +15,7 @@ import (
 	"github.com/friend-bets/backend/internal/rate"
 	"github.com/friend-bets/backend/internal/solana"
 	"github.com/friend-bets/backend/internal/store"
+	"github.com/friend-bets/backend/gen/proto/bets/v1/betsv1connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -53,34 +54,39 @@ func NewServer(
 
 // Start starts the gRPC server
 func (s *Server) Start(ctx context.Context) error {
-	// Create HTTP mux
-	mux := http.NewServeMux()
+	// Create main HTTP mux
+	mainMux := http.NewServeMux()
+	
+	// Create gRPC mux
+	grpcMux := http.NewServeMux()
 
-	// TODO: Create interceptors when needed
-	_ = connect.WithInterceptors(
+	// Create interceptors for MVP (auth disabled)
+	interceptors := connect.WithInterceptors(
 		NewLoggingInterceptor(s.logger),
-		NewRateLimitInterceptor(s.rateLimiter),
-		NewAuthInterceptor(s.logger),
+		// NewRateLimitInterceptor(s.rateLimiter), // Disabled for MVP
+		// NewAuthInterceptor(s.logger), // Disabled for MVP
 	)
 
-	// TODO: Fix betting service type mismatches then uncomment
-	// betsService := NewBetsService(s.useCases, s.solanaClient, s.notifier, s.logger)
-	// betsServicePath, betsServiceHandler := betsv1connect.NewBetsServiceHandler(betsService, interceptors)
-	// mux.Handle(betsServicePath, betsServiceHandler)
+	// Enable betting service for MVP
+	betsService := NewBetsService(s.useCases, s.solanaClient, s.notifier, s.logger)
+	betsServicePath, betsServiceHandler := betsv1connect.NewBetsServiceHandler(betsService, interceptors)
+	grpcMux.Handle(betsServicePath, betsServiceHandler)
 
-	// Add simple health check endpoint
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	// Add gRPC endpoints with h2c wrapper
+	mainMux.Handle("/bets.v1.BetsService/", h2c.NewHandler(s.addCORS(grpcMux), &http2.Server{}))
+
+	// Add simple HTTP health check endpoint (no h2c wrapper)
+	mainMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		w.Write([]byte(`{"status":"ok","service":"friend-bets-api"}`))
 	})
 
-	// Add CORS middleware
-	handler := s.addCORS(mux)
-
-	// Create HTTP server with h2c for gRPC-Web compatibility
+	// Create HTTP server
 	s.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
-		Handler: h2c.NewHandler(handler, &http2.Server{}),
+		Handler: mainMux,
 		BaseContext: func(_ net.Listener) context.Context {
 			return ctx
 		},

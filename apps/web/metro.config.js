@@ -8,12 +8,13 @@ config.resolver.alias = {
   ...config.resolver.alias,
   'react-native-svg': 'react-native-svg-web',
   'react-native$': 'react-native-web',
-  'react-native-web/dist/index$': 'react-native-web/dist/index.js',
-  'react-native-web/dist/index': 'react-native-web/dist/index.js',
 };
 
 // Ensure web extensions are resolved first
 config.resolver.platforms = ['web', 'native', 'ios', 'android'];
+
+// Set main fields for package resolution
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
 // Add extensions for better resolution
 config.resolver.sourceExts = [

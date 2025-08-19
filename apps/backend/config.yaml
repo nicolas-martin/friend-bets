@@ -3,10 +3,10 @@
 # Server configuration
 server:
     host: "localhost"
-    port: 8080
+    port: 9000
     cors:
         allowed_origins:
-            - "http://localhost:8082" # Frontend development server on port 8082
+            - "http://localhost:9001" # Frontend development server on port 8083
             - "http://localhost:3000"
         allowed_headers:
             - "Authorization"
@@ -50,4 +50,3 @@ rate:
     create_market_per_hour: 1000
     place_bet_per_minute: 1000
     ip_rate_per_minute: 1000
-
