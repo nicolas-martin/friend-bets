@@ -32,7 +32,6 @@ interface ClaimParams {
 export function useTx() {
   const { publicKey, signTransaction } = useWallet();
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
 
   const createMarketMutation = useMutation({
     mutationFn: async (params: CreateMarketParams): Promise<string> => {
@@ -226,7 +225,7 @@ export function useTx() {
     [claimMutation]
   );
 
-  const isLoading = 
+  const isAnyLoading = 
     createMarketMutation.isPending ||
     placeBetMutation.isPending ||
     resolveMarketMutation.isPending ||
@@ -237,7 +236,7 @@ export function useTx() {
     placeBet,
     resolveMarket,
     claim,
-    isLoading,
+    isLoading: isAnyLoading,
     
     // Individual loading states
     isCreatingMarket: createMarketMutation.isPending,

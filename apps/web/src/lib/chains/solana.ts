@@ -47,8 +47,12 @@ export class SolanaAdapter implements ChainAdapter {
 	private connection: Connection;
 
 	constructor(rpcEndpoint?: string, commitment: 'processed' | 'confirmed' | 'finalized' = 'confirmed') {
+		// Use environment variable for RPC URL if available
+		const defaultRpcUrl = process.env.EXPO_PUBLIC_SOLANA_RPC_URL || 
+			clusterApiUrl(process.env.EXPO_PUBLIC_SOLANA_NETWORK as 'devnet' | 'mainnet-beta' || 'devnet');
+			
 		this.connection = new Connection(
-			rpcEndpoint || clusterApiUrl('devnet'),
+			rpcEndpoint || defaultRpcUrl,
 			commitment
 		);
 	}
@@ -166,7 +170,7 @@ export class SolanaAdapter implements ChainAdapter {
 
 			return marketPDA.toString();
 		} catch (error) {
-			throw new ChainAdapterError('Failed to derive market address', 'PDA_ERROR', error);
+			throw new NetworkError('Failed to derive market address', error);
 		}
 	}
 
@@ -186,7 +190,7 @@ export class SolanaAdapter implements ChainAdapter {
 
 			return positionPDA.toString();
 		} catch (error) {
-			throw new ChainAdapterError('Failed to derive position address', 'PDA_ERROR', error);
+			throw new NetworkError('Failed to derive position address', error);
 		}
 	}
 

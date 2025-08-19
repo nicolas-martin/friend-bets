@@ -11,7 +11,6 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
 	PhantomWalletAdapter,
 	SolflareWalletAdapter,
-	BackpackWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { useMemo } from 'react';
@@ -60,13 +59,13 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
 	// Configure Solana wallet adapters
-	const network = clusterApiUrl('devnet'); // Change to 'mainnet-beta' for production
+	const networkType = (process.env.EXPO_PUBLIC_SOLANA_NETWORK as 'devnet' | 'mainnet-beta') || 'devnet';
+	const network = process.env.EXPO_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(networkType);
 
 	const wallets = useMemo(
 		() => [
 			new PhantomWalletAdapter(),
 			new SolflareWalletAdapter(),
-			new BackpackWalletAdapter(),
 		],
 		[]
 	);
