@@ -13,6 +13,7 @@ import (
 
 	"github.com/friend-bets/backend/internal/config"
 	"github.com/friend-bets/backend/internal/grpc"
+	"github.com/friend-bets/backend/internal/logger"
 	"github.com/friend-bets/backend/internal/notify"
 	"github.com/friend-bets/backend/internal/rate"
 	"github.com/friend-bets/backend/internal/solana"
@@ -256,8 +257,8 @@ func setupLogger(level string, cfg *config.Config) *slog.Logger {
 
 	var handler slog.Handler
 	if cfg.Environment == "development" {
-		// Pretty text logging for development
-		handler = slog.NewTextHandler(os.Stdout, opts)
+		// Custom dev handler for cleaner output
+		handler = logger.NewDevHandler(os.Stdout, opts)
 	} else {
 		// JSON logging for production
 		handler = slog.NewJSONHandler(os.Stdout, opts)

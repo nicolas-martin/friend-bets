@@ -3,6 +3,12 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// Add transformer to handle import.meta
+config.transformer = {
+  ...config.transformer,
+  babelTransformerPath: require.resolve('./metro.transformer.js'),
+};
+
 // Add support for React Native Web with comprehensive aliasing
 config.resolver.alias = {
   ...config.resolver.alias,

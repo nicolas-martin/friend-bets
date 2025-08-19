@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -27,41 +28,27 @@ func (i *LoggingInterceptor) Intercept(next connect.UnaryFunc) connect.UnaryFunc
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		start := time.Now()
 
-		// Extract client IP
-		clientIP := "unknown"
-		if peer := req.Peer(); peer.Addr != "" {
-			clientIP = peer.Addr
+		// Simplify method name
+		method := req.Spec().Procedure
+		if strings.HasPrefix(method, "/bets.v1.BetsService/") {
+			method = strings.TrimPrefix(method, "/bets.v1.BetsService/")
 		}
-
-		// Extract user agent
-		userAgent := ""
-		if req.Header() != nil {
-			userAgent = req.Header().Get("User-Agent")
-		}
-
-		i.logger.Info("grpc request started",
-			"method", req.Spec().Procedure,
-			"client_ip", clientIP,
-			"user_agent", userAgent,
-		)
 
 		// Call next handler
 		resp, err := next(ctx, req)
 
-		// Log completion
+		// Log completion with simplified output
 		duration := time.Since(start)
 		if err != nil {
-			i.logger.Error("grpc request failed",
-				"method", req.Spec().Procedure,
-				"client_ip", clientIP,
-				"duration_ms", duration.Milliseconds(),
+			i.logger.Error("request failed",
+				"method", method,
+				"duration", fmt.Sprintf("%dms", duration.Milliseconds()),
 				"error", err,
 			)
 		} else {
-			i.logger.Info("grpc request completed",
-				"method", req.Spec().Procedure,
-				"client_ip", clientIP,
-				"duration_ms", duration.Milliseconds(),
+			i.logger.Info("request",
+				"method", method,
+				"duration", fmt.Sprintf("%dms", duration.Milliseconds()),
 			)
 		}
 

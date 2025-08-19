@@ -10,7 +10,6 @@ import {
   Divider,
 } from 'react-native-paper';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 
@@ -29,7 +28,6 @@ export default function WalletScreen() {
     wallets,
     select,
   } = useWallet();
-  const { setVisible } = useWalletModal();
 
   const [balance, setBalance] = useState<number | null>(null);
   const [loadingBalance, setLoadingBalance] = useState(false);
@@ -55,8 +53,16 @@ export default function WalletScreen() {
     setLoadingBalance(false);
   };
 
-  const handleConnect = () => {
-    setVisible(true);
+  const handleConnect = async (walletName: string) => {
+    const selectedWallet = wallets.find(w => w.adapter.name === walletName);
+    if (selectedWallet) {
+      try {
+        select(selectedWallet.adapter.name);
+        await selectedWallet.adapter.connect();
+      } catch (error) {
+        console.error('Failed to connect wallet:', error);
+      }
+    }
   };
 
   const handleDisconnect = async () => {
@@ -68,10 +74,15 @@ export default function WalletScreen() {
     }
   };
 
-  const handleWalletSelect = (walletName: string) => {
+  const handleWalletSelect = async (walletName: string) => {
     const selectedWallet = wallets.find(w => w.adapter.name === walletName);
     if (selectedWallet) {
-      select(selectedWallet.adapter.name);
+      try {
+        select(selectedWallet.adapter.name);
+        await selectedWallet.adapter.connect();
+      } catch (error) {
+        console.error('Failed to connect wallet:', error);
+      }
     }
   };
 
@@ -276,16 +287,6 @@ export default function WalletScreen() {
               ))
             )}
 
-            <Divider style={{ marginVertical: 16 }} />
-
-            <TxButton
-              mode="contained"
-              onPress={handleConnect}
-              loading={connecting}
-              disabled={wallets.length === 0}
-            >
-              Open Wallet Selector
-            </TxButton>
           </Card.Content>
         </Card>
 

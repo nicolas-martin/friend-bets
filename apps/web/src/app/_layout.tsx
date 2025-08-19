@@ -7,7 +7,6 @@ import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
 	PhantomWalletAdapter,
 	SolflareWalletAdapter,
@@ -74,61 +73,59 @@ function RootLayoutNav() {
 		<GestureHandlerRootView style={{ flex: 1 }}>
 			<ConnectionProvider endpoint={network}>
 				<WalletProvider wallets={wallets} autoConnect>
-					<WalletModalProvider>
-						<SafeAreaProvider>
-							<QueryClientProvider client={queryClient}>
-								<PaperProvider theme={theme}>
-									<Stack
-										screenOptions={{
-											headerStyle: {
-												backgroundColor: theme.colors.surface,
-											},
-											headerTintColor: theme.colors.onSurface,
-											headerTitleStyle: {
-												fontWeight: '600',
-											},
+					<SafeAreaProvider>
+						<QueryClientProvider client={queryClient}>
+							<PaperProvider theme={theme}>
+								<Stack
+									screenOptions={{
+										headerStyle: {
+											backgroundColor: theme.colors.surface,
+										},
+										headerTintColor: theme.colors.onSurface,
+										headerTitleStyle: {
+											fontWeight: '600',
+										},
+									}}
+								>
+									<Stack.Screen
+										name="index"
+										options={{
+											title: 'Friend Bets',
+											headerRight: () => null, // Add wallet connection button later
 										}}
-									>
-										<Stack.Screen
-											name="index"
-											options={{
-												title: 'Friend Bets',
-												headerRight: () => null, // Add wallet connection button later
-											}}
-										/>
-										<Stack.Screen
-											name="create"
-											options={{
-												title: 'Create Market',
-												presentation: 'modal',
-											}}
-										/>
-										<Stack.Screen
-											name="market/[market]"
-											options={{
-												title: 'Market Details',
-											}}
-										/>
-										<Stack.Screen
-											name="resolve/[market]"
-											options={{
-												title: 'Resolve Market',
-												presentation: 'modal',
-											}}
-										/>
-										<Stack.Screen
-											name="wallet"
-											options={{
-												title: 'Wallet',
-												presentation: 'modal',
-											}}
-										/>
-									</Stack>
-									<Toast />
-								</PaperProvider>
-							</QueryClientProvider>
-						</SafeAreaProvider>
-					</WalletModalProvider>
+									/>
+									<Stack.Screen
+										name="create"
+										options={{
+											title: 'Create Market',
+											presentation: 'modal',
+										}}
+									/>
+									<Stack.Screen
+										name="market/[market]"
+										options={{
+											title: 'Market Details',
+										}}
+									/>
+									<Stack.Screen
+										name="resolve/[market]"
+										options={{
+											title: 'Resolve Market',
+											presentation: 'modal',
+										}}
+									/>
+									<Stack.Screen
+										name="wallet"
+										options={{
+											title: 'Wallet',
+											presentation: 'modal',
+										}}
+									/>
+								</Stack>
+								<Toast />
+							</PaperProvider>
+						</QueryClientProvider>
+					</SafeAreaProvider>
 				</WalletProvider>
 			</ConnectionProvider>
 		</GestureHandlerRootView>
