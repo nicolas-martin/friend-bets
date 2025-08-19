@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	betsv1 "github.com/friend-bets/backend/gen/proto/bets/v1"
 	"github.com/friend-bets/backend/internal/core"
 	"github.com/friend-bets/backend/internal/notify"
 	"github.com/friend-bets/backend/internal/solana"
@@ -23,7 +24,7 @@ type BetsService struct {
 	logger       *slog.Logger
 
 	// Event streaming
-	eventStreams map[string]chan *MarketEvent
+	eventStreams map[string]chan *betsv1.MarketEvent
 	streamsMux   sync.RWMutex
 }
 
@@ -49,15 +50,15 @@ func NewBetsService(
 		solanaClient: solanaClient,
 		notifier:     notifier,
 		logger:       logger,
-		eventStreams: make(map[string]chan *MarketEvent),
+		eventStreams: make(map[string]chan *betsv1.MarketEvent),
 	}
 }
 
 // ListMarkets lists available markets
 func (s *BetsService) ListMarkets(
 	ctx context.Context,
-	req *connect.Request[ListMarketsRequest],
-) (*connect.Response[ListMarketsResponse], error) {
+	req *connect.Request[betsv1.ListMarketsRequest],
+) (*connect.Response[betsv1.ListMarketsResponse], error) {
 	// Parse pagination
 	limit := int(req.Msg.PageSize)
 	if limit <= 0 || limit > 100 {
@@ -75,13 +76,13 @@ func (s *BetsService) ListMarkets(
 	// Convert status filter
 	statusFilter := ""
 	switch req.Msg.StatusFilter {
-	case MarketStatus_MARKET_STATUS_OPEN:
+	case betsv1.MarketStatus_MARKET_STATUS_OPEN:
 		statusFilter = core.MarketStatusOpen
-	case MarketStatus_MARKET_STATUS_PENDING_RESOLVE:
+	case betsv1.MarketStatus_MARKET_STATUS_PENDING_RESOLVE:
 		statusFilter = core.MarketStatusPendingResolve
-	case MarketStatus_MARKET_STATUS_RESOLVED:
+	case betsv1.MarketStatus_MARKET_STATUS_RESOLVED:
 		statusFilter = core.MarketStatusResolved
-	case MarketStatus_MARKET_STATUS_CANCELLED:
+	case betsv1.MarketStatus_MARKET_STATUS_CANCELLED:
 		statusFilter = core.MarketStatusCancelled
 	}
 
@@ -92,7 +93,7 @@ func (s *BetsService) ListMarkets(
 	}
 
 	// Convert to protobuf format
-	pbMarkets := make([]*Market, len(markets))
+	pbMarkets := make([]*betsv1.Market, len(markets))
 	for i, market := range markets {
 		pbMarkets[i] = s.convertMarketToProto(market)
 	}
@@ -103,7 +104,7 @@ func (s *BetsService) ListMarkets(
 		nextPageToken = strconv.Itoa(offset + limit)
 	}
 
-	response := &ListMarketsResponse{
+	response := &betsv1.ListMarketsResponse{
 		Markets:       pbMarkets,
 		NextPageToken: nextPageToken,
 	}
@@ -114,8 +115,8 @@ func (s *BetsService) ListMarkets(
 // CreateMarket creates a new betting market
 func (s *BetsService) CreateMarket(
 	ctx context.Context,
-	req *connect.Request[CreateMarketRequest],
-) (*connect.Response[CreateMarketResponse], error) {
+	req *connect.Request[betsv1.CreateMarketRequest],
+) (*connect.Response[betsv1.CreateMarketResponse], error) {
 	// Extract creator from auth context
 	creator, ok := ctx.Value("user_id").(string)
 	if !ok || creator == "" {
@@ -155,7 +156,7 @@ func (s *BetsService) CreateMarket(
 		}()
 	}
 
-	response := &CreateMarketResponse{
+	response := &betsv1.CreateMarketResponse{
 		MarketId:         market.ID,
 		UnsignedTxBase64: txResult.UnsignedTxBase64,
 		Signature:        txResult.Signature,
@@ -167,8 +168,8 @@ func (s *BetsService) CreateMarket(
 // PlaceBet places a bet on a market
 func (s *BetsService) PlaceBet(
 	ctx context.Context,
-	req *connect.Request[PlaceBetRequest],
-) (*connect.Response[PlaceBetResponse], error) {
+	req *connect.Request[betsv1.PlaceBetRequest],
+) (*connect.Response[betsv1.PlaceBetResponse], error) {
 	// Extract owner from auth context
 	owner, ok := ctx.Value("user_id").(string)
 	if !ok || owner == "" {
@@ -178,9 +179,9 @@ func (s *BetsService) PlaceBet(
 	// Convert side
 	var side string
 	switch req.Msg.Side {
-	case Side_SIDE_A:
+	case betsv1.Side_SIDE_A:
 		side = core.BetSideA
-	case Side_SIDE_B:
+	case betsv1.Side_SIDE_B:
 		side = core.BetSideB
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid side"))
@@ -217,7 +218,7 @@ func (s *BetsService) PlaceBet(
 		}()
 	}
 
-	response := &PlaceBetResponse{
+	response := &betsv1.PlaceBetResponse{
 		PositionId:       position.ID,
 		UnsignedTxBase64: txResult.UnsignedTxBase64,
 		Signature:        txResult.Signature,
@@ -229,8 +230,8 @@ func (s *BetsService) PlaceBet(
 // Resolve resolves a market outcome
 func (s *BetsService) Resolve(
 	ctx context.Context,
-	req *connect.Request[ResolveRequest],
-) (*connect.Response[ResolveResponse], error) {
+	req *connect.Request[betsv1.ResolveRequest],
+) (*connect.Response[betsv1.ResolveResponse], error) {
 	// Extract resolver from auth context
 	resolver, ok := ctx.Value("user_id").(string)
 	if !ok || resolver == "" {
@@ -240,9 +241,9 @@ func (s *BetsService) Resolve(
 	// Convert outcome
 	var outcome string
 	switch req.Msg.Outcome {
-	case Side_SIDE_A:
+	case betsv1.Side_SIDE_A:
 		outcome = core.BetSideA
-	case Side_SIDE_B:
+	case betsv1.Side_SIDE_B:
 		outcome = core.BetSideB
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid outcome"))
@@ -280,7 +281,7 @@ func (s *BetsService) Resolve(
 		}()
 	}
 
-	response := &ResolveResponse{
+	response := &betsv1.ResolveResponse{
 		UnsignedTxBase64: txResult.UnsignedTxBase64,
 		Signature:        txResult.Signature,
 	}
@@ -291,8 +292,8 @@ func (s *BetsService) Resolve(
 // Claim claims winnings from a resolved market
 func (s *BetsService) Claim(
 	ctx context.Context,
-	req *connect.Request[ClaimRequest],
-) (*connect.Response[ClaimResponse], error) {
+	req *connect.Request[betsv1.ClaimRequest],
+) (*connect.Response[betsv1.ClaimResponse], error) {
 	// Extract owner from auth context
 	owner, ok := ctx.Value("user_id").(string)
 	if !ok || owner == "" {
@@ -340,7 +341,7 @@ func (s *BetsService) Claim(
 
 	s.logger.Info("claim prepared", "market_id", req.Msg.MarketId, "owner", owner, "payout", payoutInfo.UserPayout)
 
-	response := &ClaimResponse{
+	response := &betsv1.ClaimResponse{
 		PayoutAmount:     payoutInfo.UserPayout,
 		UnsignedTxBase64: txResult.UnsignedTxBase64,
 		Signature:        txResult.Signature,
@@ -352,8 +353,8 @@ func (s *BetsService) Claim(
 // GetMarket gets a single market by ID
 func (s *BetsService) GetMarket(
 	ctx context.Context,
-	req *connect.Request[GetMarketRequest],
-) (*connect.Response[GetMarketResponse], error) {
+	req *connect.Request[betsv1.GetMarketRequest],
+) (*connect.Response[betsv1.GetMarketResponse], error) {
 	if req.Msg.MarketId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("market ID is required"))
 	}
@@ -364,7 +365,7 @@ func (s *BetsService) GetMarket(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("market not found: %w", err))
 	}
 
-	response := &GetMarketResponse{
+	response := &betsv1.GetMarketResponse{
 		Market: s.convertMarketToProto(market),
 	}
 
@@ -374,8 +375,8 @@ func (s *BetsService) GetMarket(
 // GetPosition gets a user's position in a specific market
 func (s *BetsService) GetPosition(
 	ctx context.Context,
-	req *connect.Request[GetPositionRequest],
-) (*connect.Response[GetPositionResponse], error) {
+	req *connect.Request[betsv1.GetPositionRequest],
+) (*connect.Response[betsv1.GetPositionResponse], error) {
 	if req.Msg.MarketId == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("market ID is required"))
 	}
@@ -389,7 +390,7 @@ func (s *BetsService) GetPosition(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("position not found: %w", err))
 	}
 
-	response := &GetPositionResponse{
+	response := &betsv1.GetPositionResponse{
 		Position: s.convertPositionToProto(position),
 	}
 
@@ -399,8 +400,8 @@ func (s *BetsService) GetPosition(
 // GetUserPositions gets all positions for a user
 func (s *BetsService) GetUserPositions(
 	ctx context.Context,
-	req *connect.Request[GetUserPositionsRequest],
-) (*connect.Response[GetUserPositionsResponse], error) {
+	req *connect.Request[betsv1.GetUserPositionsRequest],
+) (*connect.Response[betsv1.GetUserPositionsResponse], error) {
 	if req.Msg.Owner == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("owner is required"))
 	}
@@ -426,7 +427,7 @@ func (s *BetsService) GetUserPositions(
 	}
 
 	// Convert to protobuf format
-	pbPositions := make([]*Position, len(positions))
+	pbPositions := make([]*betsv1.Position, len(positions))
 	for i, position := range positions {
 		pbPositions[i] = s.convertPositionToProto(position)
 	}
@@ -437,7 +438,7 @@ func (s *BetsService) GetUserPositions(
 		nextPageToken = strconv.Itoa(offset + limit)
 	}
 
-	response := &GetUserPositionsResponse{
+	response := &betsv1.GetUserPositionsResponse{
 		Positions:     pbPositions,
 		NextPageToken: nextPageToken,
 	}
@@ -448,14 +449,14 @@ func (s *BetsService) GetUserPositions(
 // WatchEvents streams market events
 func (s *BetsService) WatchEvents(
 	ctx context.Context,
-	req *connect.Request[WatchEventsRequest],
-	stream *connect.ServerStream[WatchEventsResponse],
+	req *connect.Request[betsv1.WatchEventsRequest],
+	stream *connect.ServerStream[betsv1.WatchEventsResponse],
 ) error {
 	// Generate stream ID
 	streamID := fmt.Sprintf("stream_%d", time.Now().UnixNano())
 
 	// Create event channel for this stream
-	eventChan := make(chan *MarketEvent, 100)
+	eventChan := make(chan *betsv1.MarketEvent, 100)
 
 	// Register stream
 	s.streamsMux.Lock()
@@ -486,7 +487,7 @@ func (s *BetsService) WatchEvents(
 			if len(req.Msg.MarketIds) > 0 {
 				found := false
 				for _, marketID := range req.Msg.MarketIds {
-					if marketID == event.MarketID {
+					if marketID == event.MarketId {
 						found = true
 						break
 					}
@@ -497,10 +498,10 @@ func (s *BetsService) WatchEvents(
 			}
 
 			// Send event to client
-			response := &WatchEventsResponse{
-				Event: &MarketEvent_{
-					Id:          event.ID,
-					MarketId:    event.MarketID,
+			response := &betsv1.WatchEventsResponse{
+				Event: &betsv1.MarketEvent{
+					Id:          event.Id,
+					MarketId:    event.MarketId,
 					EventType:   event.EventType,
 					Data:        event.Data,
 					Timestamp:   event.Timestamp,
@@ -523,7 +524,14 @@ func (s *BetsService) BroadcastEvent(event *MarketEvent) {
 
 	for streamID, eventChan := range s.eventStreams {
 		select {
-		case eventChan <- event:
+		case eventChan <- &betsv1.MarketEvent{
+			Id:          event.ID,
+			MarketId:    event.MarketID,
+			EventType:   event.EventType,
+			Data:        event.Data,
+			Timestamp:   event.Timestamp,
+			TxSignature: event.TxSignature,
+		}:
 			// Event sent successfully
 		default:
 			// Channel is full, skip this stream
@@ -535,8 +543,8 @@ func (s *BetsService) BroadcastEvent(event *MarketEvent) {
 // Helper methods
 
 // convertMarketToProto converts a domain market to protobuf format
-func (s *BetsService) convertMarketToProto(market *core.Market) *Market {
-	pbMarket := &Market{
+func (s *BetsService) convertMarketToProto(market *core.Market) *betsv1.Market {
+	pbMarket := &betsv1.Market{
 		Id:                  market.ID,
 		Creator:             market.Creator,
 		Mint:                market.Mint,
@@ -554,22 +562,22 @@ func (s *BetsService) convertMarketToProto(market *core.Market) *Market {
 	// Convert status
 	switch market.Status {
 	case core.MarketStatusOpen:
-		pbMarket.Status = MarketStatus_MARKET_STATUS_OPEN
+		pbMarket.Status = betsv1.MarketStatus_MARKET_STATUS_OPEN
 	case core.MarketStatusPendingResolve:
-		pbMarket.Status = MarketStatus_MARKET_STATUS_PENDING_RESOLVE
+		pbMarket.Status = betsv1.MarketStatus_MARKET_STATUS_PENDING_RESOLVE
 	case core.MarketStatusResolved:
-		pbMarket.Status = MarketStatus_MARKET_STATUS_RESOLVED
+		pbMarket.Status = betsv1.MarketStatus_MARKET_STATUS_RESOLVED
 	case core.MarketStatusCancelled:
-		pbMarket.Status = MarketStatus_MARKET_STATUS_CANCELLED
+		pbMarket.Status = betsv1.MarketStatus_MARKET_STATUS_CANCELLED
 	}
 
 	// Convert outcome
 	if market.Outcome != nil {
 		switch *market.Outcome {
 		case core.BetSideA:
-			pbMarket.Outcome = Side_SIDE_A
+			pbMarket.Outcome = betsv1.Side_SIDE_A
 		case core.BetSideB:
-			pbMarket.Outcome = Side_SIDE_B
+			pbMarket.Outcome = betsv1.Side_SIDE_B
 		}
 	}
 
@@ -577,8 +585,8 @@ func (s *BetsService) convertMarketToProto(market *core.Market) *Market {
 }
 
 // convertPositionToProto converts a domain position to protobuf format
-func (s *BetsService) convertPositionToProto(position *core.Position) *Position {
-	pbPosition := &Position{
+func (s *BetsService) convertPositionToProto(position *core.Position) *betsv1.Position {
+	pbPosition := &betsv1.Position{
 		Id:        position.ID,
 		MarketId:  position.MarketID,
 		Owner:     position.Owner,
@@ -590,9 +598,9 @@ func (s *BetsService) convertPositionToProto(position *core.Position) *Position 
 	// Convert side
 	switch position.Side {
 	case core.BetSideA:
-		pbPosition.Side = Side_SIDE_A
+		pbPosition.Side = betsv1.Side_SIDE_A
 	case core.BetSideB:
-		pbPosition.Side = Side_SIDE_B
+		pbPosition.Side = betsv1.Side_SIDE_B
 	}
 
 	return pbPosition

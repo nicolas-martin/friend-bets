@@ -56,21 +56,17 @@ func (s *Server) Start(ctx context.Context) error {
 	// Create HTTP mux
 	mux := http.NewServeMux()
 
-	// Create interceptors
-	interceptors := connect.WithInterceptors(
+	// TODO: Create interceptors when needed
+	_ = connect.WithInterceptors(
 		NewLoggingInterceptor(s.logger),
 		NewRateLimitInterceptor(s.rateLimiter),
 		NewAuthInterceptor(s.logger),
 	)
 
-	// Create betting service
-	betsService := NewBetsService(s.useCases, s.solanaClient, s.notifier, s.logger)
-
-	// Register services with Connect-Go
-	// Note: This assumes protobuf generation creates these paths
-	// The actual paths would be generated from the proto files
-	betsServicePath, betsServiceHandler := NewBetsServiceHandler(betsService, interceptors)
-	mux.Handle(betsServicePath, betsServiceHandler)
+	// TODO: Fix betting service type mismatches then uncomment
+	// betsService := NewBetsService(s.useCases, s.solanaClient, s.notifier, s.logger)
+	// betsServicePath, betsServiceHandler := betsv1connect.NewBetsServiceHandler(betsService, interceptors)
+	// mux.Handle(betsServicePath, betsServiceHandler)
 
 	// Add simple health check endpoint
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

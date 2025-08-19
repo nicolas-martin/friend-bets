@@ -3,14 +3,26 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Add support for React Native Web
+// Add support for React Native Web with comprehensive aliasing
 config.resolver.alias = {
   ...config.resolver.alias,
   'react-native-svg': 'react-native-svg-web',
+  'react-native$': 'react-native-web',
+  'react-native-web/dist/index$': 'react-native-web/dist/index.js',
+  'react-native-web/dist/index': 'react-native-web/dist/index.js',
 };
 
-// Ensure web extensions are resolved
+// Ensure web extensions are resolved first
 config.resolver.platforms = ['web', 'native', 'ios', 'android'];
+
+// Add extensions for better resolution
+config.resolver.sourceExts = [
+  ...config.resolver.sourceExts,
+  'web.ts',
+  'web.tsx', 
+  'web.js',
+  'web.jsx'
+];
 
 // Limit what files are watched to reduce EMFILE errors
 const projectRoot = __dirname;

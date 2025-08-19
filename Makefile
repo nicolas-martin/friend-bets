@@ -25,12 +25,12 @@ db-reset: ## Reset database (WARNING: destroys all data)
 	@echo "Database reset complete"
 
 dev: ## Run both backend and frontend in development mode (starts database first)
-	@make db-up
+	# @make db-up
 	@echo "Starting backend and frontend..."
 	@make backend & make frontend & wait
 
 backend: ## Run the Go backend server
-	cd apps/backend && go run cmd/api/main.go
+	cd apps/backend && go run cmd/api/main.go -config config.yaml
 
 frontend: ## Run the React Native web frontend
 	cd apps/web && npm run dev
