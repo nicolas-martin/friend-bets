@@ -243,7 +243,7 @@ pub mod friends_bets {
 
         if payout > 0 {
             // Transfer payout from vault to user
-            let market_key = market.key();
+            let _market_key = market.key();
             let seeds = &[
                 b"market",
                 market.creator.as_ref(),
@@ -303,12 +303,15 @@ pub mod friends_bets {
 
         if fee_amount > 0 {
             // Transfer fee from vault to creator
-            let market_key = market.key();
+            let _market_key = market.key();
+            let market_creator = market.creator;
+            let market_mint = market.mint;
+            let market_bump = market.bump;
             let seeds = &[
                 b"market",
-                market.creator.as_ref(),
-                market.mint.as_ref(),
-                &[market.bump],
+                market_creator.as_ref(),
+                market_mint.as_ref(),
+                &[market_bump],
             ];
             let signer = &[&seeds[..]];
 
@@ -317,7 +320,7 @@ pub mod friends_bets {
                 Transfer {
                     from: ctx.accounts.vault.to_account_info(),
                     to: ctx.accounts.creator_token_account.to_account_info(),
-                    authority: ctx.accounts.market.to_account_info(),
+                    authority: market.to_account_info(),
                 },
                 signer,
             );
