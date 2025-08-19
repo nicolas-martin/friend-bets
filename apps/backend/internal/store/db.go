@@ -6,7 +6,6 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // DB wraps the GORM database connection
@@ -14,15 +13,13 @@ type DB struct {
 	*gorm.DB
 }
 
-// New creates a new database connection
-func New(databaseURL string, maxConns int) (*DB, error) {
+// NewDB creates a new database connection
+func NewDB(databaseURL string, logger interface{}) (*DB, error) {
 	if databaseURL == "" {
 		return nil, fmt.Errorf("database URL is required")
 	}
 
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
+	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -33,8 +30,8 @@ func New(databaseURL string, maxConns int) (*DB, error) {
 	}
 
 	// Configure connection pool
-	sqlDB.SetMaxOpenConns(maxConns)
-	sqlDB.SetMaxIdleConns(maxConns / 2)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetMaxIdleConns(50)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 	sqlDB.SetConnMaxIdleTime(30 * time.Minute)
 
@@ -68,3 +65,4 @@ func (db *DB) Health() error {
 	}
 	return sqlDB.Ping()
 }
+

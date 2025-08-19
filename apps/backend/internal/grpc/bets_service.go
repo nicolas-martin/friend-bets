@@ -759,4 +759,3 @@ func NewBetsServiceHandler(service *BetsService, opts ...connect.HandlerOption) 
 	// For now, return placeholder values
 	return "/bets.v1.BetsService/", nil
 }
-

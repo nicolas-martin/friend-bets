@@ -9,7 +9,6 @@ import (
 
 	"github.com/friend-bets/backend/internal/config"
 	"github.com/friend-bets/backend/internal/store"
-	"github.com/shopspring/decimal"
 )
 
 // UseCases implements business logic layer

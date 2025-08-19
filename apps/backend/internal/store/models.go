@@ -79,14 +79,14 @@ type Dispute struct {
 
 // NotificationSubscription stores user notification preferences
 type NotificationSubscription struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	UserID     string    `gorm:"not null;index" json:"user_id"`
-	Type       string    `gorm:"not null" json:"type"` // email, web_push
-	Endpoint   string    `gorm:"not null" json:"endpoint"`
-	Data       string    `gorm:"type:jsonb" json:"data"` // JSON for web push keys, etc.
-	Enabled    bool      `gorm:"not null;default:true" json:"enabled"`
-	CreatedAt  time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt  time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    string    `gorm:"not null;index" json:"user_id"`
+	Type      string    `gorm:"not null" json:"type"` // email, web_push
+	Endpoint  string    `gorm:"not null" json:"endpoint"`
+	Data      string    `gorm:"type:jsonb" json:"data"` // JSON for web push keys, etc.
+	Enabled   bool      `gorm:"not null;default:true" json:"enabled"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 // AnalyticsDaily stores daily rolled-up analytics
@@ -124,3 +124,4 @@ func AutoMigrate(db *gorm.DB) error {
 		&RateCounter{},
 	)
 }
+

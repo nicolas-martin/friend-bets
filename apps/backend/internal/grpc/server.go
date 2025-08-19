@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"connectrpc.com/grpchealth"
-	"connectrpc.com/grpcreflect"
 	"github.com/friend-bets/backend/internal/config"
 	"github.com/friend-bets/backend/internal/core"
 	"github.com/friend-bets/backend/internal/notify"
@@ -74,17 +72,11 @@ func (s *Server) Start(ctx context.Context) error {
 	betsServicePath, betsServiceHandler := NewBetsServiceHandler(betsService, interceptors)
 	mux.Handle(betsServicePath, betsServiceHandler)
 
-	// Add health check
-	checker := grpchealth.NewStaticChecker()
-	mux.Handle(grpchealth.NewHandler(checker))
-
-	// Add reflection for development
-	reflector := grpcreflect.NewStaticReflector(
-		"bets.v1.BetsService",
-		"grpc.health.v1.Health",
-	)
-	mux.Handle(grpcreflect.NewHandlerV1(reflector))
-	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
+	// Add simple health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
 
 	// Add CORS middleware
 	handler := s.addCORS(mux)
@@ -114,11 +106,11 @@ func (s *Server) Start(ctx context.Context) error {
 // Stop gracefully stops the server
 func (s *Server) Stop(ctx context.Context) error {
 	s.logger.Info("stopping gRPC server")
-	
+
 	if s.httpServer != nil {
 		return s.httpServer.Shutdown(ctx)
 	}
-	
+
 	return nil
 }
 
@@ -132,9 +124,9 @@ func (s *Server) addCORS(handler http.Handler) http.Handler {
 				break
 			}
 		}
-		
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		
+
 		allowedHeaders := "Accept, Authorization, Content-Type, X-CSRF-Token"
 		if len(s.config.Server.CORS.AllowedHeaders) > 0 {
 			allowedHeaders = ""
@@ -146,7 +138,7 @@ func (s *Server) addCORS(handler http.Handler) http.Handler {
 			}
 		}
 		w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
-		
+
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 
@@ -179,3 +171,4 @@ func (s *Server) Metrics() map[string]interface{} {
 		"timestamp":   time.Now().Unix(),
 	}
 }
+

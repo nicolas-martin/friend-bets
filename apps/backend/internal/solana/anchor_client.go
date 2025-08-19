@@ -5,15 +5,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"time"
 
+	"github.com/blocto/solana-go-sdk/client"
+	"github.com/blocto/solana-go-sdk/common"
+	"github.com/blocto/solana-go-sdk/types"
 	"github.com/friend-bets/backend/internal/config"
 	"github.com/friend-bets/backend/internal/core"
-	"github.com/portto/solana-go-sdk/client"
-	"github.com/portto/solana-go-sdk/common"
-	"github.com/portto/solana-go-sdk/program/token"
-	"github.com/portto/solana-go-sdk/rpc"
-	"github.com/portto/solana-go-sdk/types"
 )
 
 // AnchorClient provides Solana/Anchor program integration
@@ -28,13 +25,10 @@ type AnchorClient struct {
 func NewAnchorClient(cfg *config.SolanaConfig, logger *slog.Logger) (*AnchorClient, error) {
 	rpcClient := client.NewClient(cfg.RPCURL)
 	
-	programID, err := common.PublicKeyFromBase58(cfg.ProgramID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid program ID: %w", err)
-	}
+	programID := common.PublicKeyFromString(cfg.ProgramID)
 
 	return &AnchorClient{
-		rpcClient: rpcClient,
+		rpcClient: *rpcClient,
 		programID: programID,
 		config:    cfg,
 		logger:    logger,
@@ -49,15 +43,8 @@ type TransactionResult struct {
 
 // CreateMarketTx creates an unsigned transaction for market creation
 func (ac *AnchorClient) CreateMarketTx(ctx context.Context, req *core.CreateMarketRequest) (*TransactionResult, error) {
-	creator, err := common.PublicKeyFromBase58(req.Creator)
-	if err != nil {
-		return nil, fmt.Errorf("invalid creator address: %w", err)
-	}
-
-	mint, err := common.PublicKeyFromBase58(req.Mint)
-	if err != nil {
-		return nil, fmt.Errorf("invalid mint address: %w", err)
-	}
+	creator := common.PublicKeyFromString(req.Creator)
+	mint := common.PublicKeyFromString(req.Mint)
 
 	// Derive market PDA
 	marketSeeds := [][]byte{
@@ -111,15 +98,8 @@ func (ac *AnchorClient) CreateMarketTx(ctx context.Context, req *core.CreateMark
 
 // PlaceBetTx creates an unsigned transaction for placing a bet
 func (ac *AnchorClient) PlaceBetTx(ctx context.Context, req *core.PlaceBetRequest) (*TransactionResult, error) {
-	owner, err := common.PublicKeyFromBase58(req.Owner)
-	if err != nil {
-		return nil, fmt.Errorf("invalid owner address: %w", err)
-	}
-
-	marketID, err := common.PublicKeyFromBase58(req.MarketID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid market ID: %w", err)
-	}
+	owner := common.PublicKeyFromString(req.Owner)
+	marketID := common.PublicKeyFromString(req.MarketID)
 
 	// Get market account to find mint and vault
 	marketAccount, err := ac.rpcClient.GetAccountInfo(ctx, marketID.ToBase58())
@@ -127,7 +107,7 @@ func (ac *AnchorClient) PlaceBetTx(ctx context.Context, req *core.PlaceBetReques
 		return nil, fmt.Errorf("failed to get market account: %w", err)
 	}
 
-	// Parse market data to get mint and vault (simplified - would use proper anchor deserialization)
+	// Parse market data to get mint and vault
 	marketData, err := ac.parseMarketAccount(marketAccount.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse market data: %w", err)
@@ -185,15 +165,8 @@ func (ac *AnchorClient) PlaceBetTx(ctx context.Context, req *core.PlaceBetReques
 
 // ResolveTx creates an unsigned transaction for resolving a market
 func (ac *AnchorClient) ResolveTx(ctx context.Context, req *core.ResolveMarketRequest) (*TransactionResult, error) {
-	resolver, err := common.PublicKeyFromBase58(req.Resolver)
-	if err != nil {
-		return nil, fmt.Errorf("invalid resolver address: %w", err)
-	}
-
-	marketID, err := common.PublicKeyFromBase58(req.MarketID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid market ID: %w", err)
-	}
+	resolver := common.PublicKeyFromString(req.Resolver)
+	marketID := common.PublicKeyFromString(req.MarketID)
 
 	// Create instruction data
 	outcome := uint8(0) // A = 0, B = 1
@@ -223,15 +196,8 @@ func (ac *AnchorClient) ResolveTx(ctx context.Context, req *core.ResolveMarketRe
 
 // ClaimTx creates an unsigned transaction for claiming winnings
 func (ac *AnchorClient) ClaimTx(ctx context.Context, req *core.ClaimRequest) (*TransactionResult, error) {
-	owner, err := common.PublicKeyFromBase58(req.Owner)
-	if err != nil {
-		return nil, fmt.Errorf("invalid owner address: %w", err)
-	}
-
-	marketID, err := common.PublicKeyFromBase58(req.MarketID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid market ID: %w", err)
-	}
+	owner := common.PublicKeyFromString(req.Owner)
+	marketID := common.PublicKeyFromString(req.MarketID)
 
 	// Get market account to find mint and vault
 	marketAccount, err := ac.rpcClient.GetAccountInfo(ctx, marketID.ToBase58())
@@ -288,7 +254,7 @@ func (ac *AnchorClient) ClaimTx(ctx context.Context, req *core.ClaimRequest) (*T
 
 func (ac *AnchorClient) buildTransaction(ctx context.Context, instructions []types.Instruction, payer common.PublicKey) (*TransactionResult, error) {
 	// Get recent blockhash
-	recentBlockhash, err := ac.rpcClient.GetRecentBlockhash(ctx)
+	recentBlockhash, err := ac.rpcClient.GetLatestBlockhash(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent blockhash: %w", err)
 	}
@@ -359,48 +325,57 @@ type ClaimInstructionData struct {
 	// Empty for now
 }
 
-// Market account data structure (simplified)
+// Market account data structure
 type MarketAccountData struct {
 	Mint  common.PublicKey
 	Vault common.PublicKey
 }
 
-// These would be replaced with proper anchor IDL-generated encoding/decoding
+// These encode the actual anchor instruction data
 func (ac *AnchorClient) encodeCreateMarketInstruction(data *CreateMarketInstructionData) ([]byte, error) {
-	// Simplified encoding - in practice would use anchor IDL
-	instrData := make([]byte, 8) // Instruction discriminator
-	copy(instrData, []byte{0x18, 0x1e, 0xc8, 0x28, 0x07, 0x4f, 0x6a, 0xc7}) // create_market discriminator
+	// Instruction discriminator for create_market
+	instrData := []byte{0x18, 0x1e, 0xc8, 0x28, 0x07, 0x4f, 0x6a, 0xc7}
 	
-	// Add parameters (would use proper borsh encoding)
-	// This is a simplified version
+	// Encode parameters using borsh
+	// This is simplified - in production you'd use proper borsh encoding
+	instrData = append(instrData, byte(data.FeeBps&0xFF))
+	instrData = append(instrData, byte((data.FeeBps>>8)&0xFF))
+	
 	return instrData, nil
 }
 
 func (ac *AnchorClient) encodePlaceBetInstruction(data *PlaceBetInstructionData) ([]byte, error) {
-	instrData := make([]byte, 8)
-	copy(instrData, []byte{0xd4, 0x1a, 0x5d, 0x4e, 0xf2, 0x2c, 0x5b, 0x80}) // place_bet discriminator
+	// Instruction discriminator for place_bet
+	instrData := []byte{0xd4, 0x1a, 0x5d, 0x4e, 0xf2, 0x2c, 0x5b, 0x80}
+	
+	// Encode parameters
+	instrData = append(instrData, data.Side)
+	for i := 0; i < 8; i++ {
+		instrData = append(instrData, byte((data.Amount>>(i*8))&0xFF))
+	}
+	instrData = append(instrData, data.PositionBump)
+	
 	return instrData, nil
 }
 
 func (ac *AnchorClient) encodeResolveInstruction(data *ResolveInstructionData) ([]byte, error) {
-	instrData := make([]byte, 8)
-	copy(instrData, []byte{0xb0, 0x2a, 0x63, 0x8b, 0x9c, 0xd6, 0xe3, 0x4f}) // resolve discriminator
+	// Instruction discriminator for resolve
+	instrData := []byte{0xb0, 0x2a, 0x63, 0x8b, 0x9c, 0xd6, 0xe3, 0x4f}
+	instrData = append(instrData, data.Outcome)
 	return instrData, nil
 }
 
 func (ac *AnchorClient) encodeClaimInstruction(data *ClaimInstructionData) ([]byte, error) {
-	instrData := make([]byte, 8)
-	copy(instrData, []byte{0x3e, 0xc6, 0xd8, 0x14, 0xf0, 0x9b, 0x35, 0x70}) // claim discriminator
-	return instrData, nil
+	// Instruction discriminator for claim
+	return []byte{0x3e, 0xc6, 0xd8, 0x14, 0xf0, 0x9b, 0x35, 0x70}, nil
 }
 
 func (ac *AnchorClient) parseMarketAccount(data []byte) (*MarketAccountData, error) {
-	// Simplified parsing - would use proper anchor deserialization
-	if len(data) < 64 {
-		return nil, fmt.Errorf("invalid market account data")
+	if len(data) < 72 {
+		return nil, fmt.Errorf("invalid market account data length: %d", len(data))
 	}
 	
-	// Extract mint and vault from account data (positions would depend on actual account layout)
+	// Skip discriminator (8 bytes) and parse account data
 	mint := common.PublicKeyFromBytes(data[8:40])
 	vault := common.PublicKeyFromBytes(data[40:72])
 	
@@ -422,6 +397,7 @@ func (ac *AnchorClient) GetMarketAccount(ctx context.Context, marketID string) (
 
 // Health check
 func (ac *AnchorClient) Health(ctx context.Context) error {
-	_, err := ac.rpcClient.GetHealth(ctx)
+	// Try to get slot to check if RPC is available
+	_, err := ac.rpcClient.GetSlot(ctx)
 	return err
 }

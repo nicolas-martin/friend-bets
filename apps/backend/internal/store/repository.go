@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -229,3 +228,4 @@ func (r *Repository) CleanupExpiredRateCounters() error {
 func (r *Repository) Health() error {
 	return r.db.Health()
 }
+

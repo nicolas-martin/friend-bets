@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"strings"
 	"time"
 
@@ -27,10 +26,10 @@ func NewLoggingInterceptor(logger *slog.Logger) connect.UnaryInterceptorFunc {
 func (i *LoggingInterceptor) Intercept(next connect.UnaryFunc) connect.UnaryFunc {
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		start := time.Now()
-		
+
 		// Extract client IP
 		clientIP := "unknown"
-		if peer := req.Peer(); peer != nil {
+		if peer := req.Peer(); peer.Addr != "" {
 			clientIP = peer.Addr
 		}
 
@@ -48,7 +47,7 @@ func (i *LoggingInterceptor) Intercept(next connect.UnaryFunc) connect.UnaryFunc
 
 		// Call next handler
 		resp, err := next(ctx, req)
-		
+
 		// Log completion
 		duration := time.Since(start)
 		if err != nil {
@@ -86,7 +85,7 @@ func (i *RateLimitInterceptor) Intercept(next connect.UnaryFunc) connect.UnaryFu
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		// Extract client IP
 		clientIP := "unknown"
-		if peer := req.Peer(); peer != nil {
+		if peer := req.Peer(); peer.Addr != "" {
 			clientIP = peer.Addr
 		}
 
@@ -151,7 +150,7 @@ func (i *RateLimitInterceptor) checkRateLimits(ctx context.Context, clientIP, us
 	// Check user-based rate limits if user ID is available
 	if userID != "" {
 		userKey := fmt.Sprintf("user:%s", userID)
-		
+
 		switch action {
 		case "create_market":
 			if !i.rateLimiter.Allow(ctx, userKey, action, time.Hour, 10) {
@@ -237,7 +236,7 @@ func (i *AuthInterceptor) validateToken(ctx context.Context, token string) (stri
 	// 2. Check token expiration
 	// 3. Validate against a user database
 	// 4. Handle different token types (JWT, API key, etc.)
-	
+
 	// For now, we'll do a simple validation
 	if len(token) < 10 {
 		return "", fmt.Errorf("token too short")
@@ -347,3 +346,4 @@ func (i *TimeoutInterceptor) Intercept(next connect.UnaryFunc) connect.UnaryFunc
 		return next(ctx, req)
 	})
 }
+

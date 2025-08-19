@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
-
-	"github.com/friend-bets/backend/internal/core"
-	"gorm.io/gorm"
 )
+
+// Odds represents betting odds
+type Odds struct {
+	A float64 `json:"a"`
+	B float64 `json:"b"`
+}
 
 // Analytics provides analytics and metrics functionality
 type Analytics struct {
@@ -29,21 +32,21 @@ func NewAnalytics(repo *Repository, logger *slog.Logger) *Analytics {
 
 // MarketMetrics contains metrics for a specific market
 type MarketMetrics struct {
-	MarketID          string    `json:"market_id"`
-	Title             string    `json:"title"`
-	Creator           string    `json:"creator"`
-	CreatedAt         time.Time `json:"created_at"`
-	TotalVolume       uint64    `json:"total_volume"`
-	TotalBets         int       `json:"total_bets"`
-	UniqueParticipants int       `json:"unique_participants"`
-	SideAVolume       uint64    `json:"side_a_volume"`
-	SideBVolume       uint64    `json:"side_b_volume"`
-	SideABets         int       `json:"side_a_bets"`
-	SideBBets         int       `json:"side_b_bets"`
-	CurrentOdds       core.Odds `json:"current_odds"`
-	Status            string    `json:"status"`
-	ResolvedAt        *time.Time `json:"resolved_at,omitempty"`
-	Outcome           *string   `json:"outcome,omitempty"`
+	MarketID           string     `json:"market_id"`
+	Title              string     `json:"title"`
+	Creator            string     `json:"creator"`
+	CreatedAt          time.Time  `json:"created_at"`
+	TotalVolume        uint64     `json:"total_volume"`
+	TotalBets          int        `json:"total_bets"`
+	UniqueParticipants int        `json:"unique_participants"`
+	SideAVolume        uint64     `json:"side_a_volume"`
+	SideBVolume        uint64     `json:"side_b_volume"`
+	SideABets          int        `json:"side_a_bets"`
+	SideBBets          int        `json:"side_b_bets"`
+	CurrentOdds        Odds  `json:"current_odds"`
+	Status             string     `json:"status"`
+	ResolvedAt         *time.Time `json:"resolved_at,omitempty"`
+	Outcome            *string    `json:"outcome,omitempty"`
 }
 
 // DailyMetrics contains daily aggregated metrics
@@ -63,32 +66,32 @@ type DailyMetrics struct {
 
 // UserMetrics contains metrics for a specific user
 type UserMetrics struct {
-	UserID              string    `json:"user_id"`
-	TotalBets           int       `json:"total_bets"`
-	TotalVolume         uint64    `json:"total_volume"`
-	MarketsCreated      int       `json:"markets_created"`
-	WinningBets         int       `json:"winning_bets"`
-	LosingBets          int       `json:"losing_bets"`
-	WinRate             float64   `json:"win_rate"`
-	ProfitLoss          int64     `json:"profit_loss"`
-	AvgBetSize          float64   `json:"avg_bet_size"`
-	LargestBet          uint64    `json:"largest_bet"`
-	FavoredSide         string    `json:"favored_side"` // Which side they bet on more often
-	FirstBetAt          time.Time `json:"first_bet_at"`
-	LastBetAt           time.Time `json:"last_bet_at"`
-	ActiveDays          int       `json:"active_days"`
+	UserID         string    `json:"user_id"`
+	TotalBets      int       `json:"total_bets"`
+	TotalVolume    uint64    `json:"total_volume"`
+	MarketsCreated int       `json:"markets_created"`
+	WinningBets    int       `json:"winning_bets"`
+	LosingBets     int       `json:"losing_bets"`
+	WinRate        float64   `json:"win_rate"`
+	ProfitLoss     int64     `json:"profit_loss"`
+	AvgBetSize     float64   `json:"avg_bet_size"`
+	LargestBet     uint64    `json:"largest_bet"`
+	FavoredSide    string    `json:"favored_side"` // Which side they bet on more often
+	FirstBetAt     time.Time `json:"first_bet_at"`
+	LastBetAt      time.Time `json:"last_bet_at"`
+	ActiveDays     int       `json:"active_days"`
 }
 
 // FunnelMetrics contains conversion funnel metrics
 type FunnelMetrics struct {
-	Date              time.Time `json:"date"`
-	VisitorsToApp     int       `json:"visitors_to_app"`
-	ViewedMarkets     int       `json:"viewed_markets"`
-	ConnectedWallet   int       `json:"connected_wallet"`
-	PlacedFirstBet    int       `json:"placed_first_bet"`
-	ReturnedUsers     int       `json:"returned_users"`
-	ConversionToFirstBet float64 `json:"conversion_to_first_bet"`
-	RetentionRate     float64   `json:"retention_rate"`
+	Date                 time.Time `json:"date"`
+	VisitorsToApp        int       `json:"visitors_to_app"`
+	ViewedMarkets        int       `json:"viewed_markets"`
+	ConnectedWallet      int       `json:"connected_wallet"`
+	PlacedFirstBet       int       `json:"placed_first_bet"`
+	ReturnedUsers        int       `json:"returned_users"`
+	ConversionToFirstBet float64   `json:"conversion_to_first_bet"`
+	RetentionRate        float64   `json:"retention_rate"`
 }
 
 // GetMarketMetrics retrieves comprehensive metrics for a market
@@ -122,7 +125,7 @@ func (a *Analytics) GetMarketMetrics(ctx context.Context, marketID string) (*Mar
 		metrics.TotalVolume += pos.Amount
 		uniqueUsers[pos.Owner] = true
 
-		if pos.Side == core.BetSideA {
+		if pos.Side == "A" {
 			metrics.SideABets++
 			metrics.SideAVolume += pos.Amount
 		} else {
@@ -134,11 +137,15 @@ func (a *Analytics) GetMarketMetrics(ctx context.Context, marketID string) (*Mar
 	metrics.UniqueParticipants = len(uniqueUsers)
 
 	// Calculate current odds
-	domainMarket := &core.Market{
-		StakedA: market.StakedA,
-		StakedB: market.StakedB,
+	if market.StakedA+market.StakedB > 0 {
+		totalStaked := float64(market.StakedA + market.StakedB)
+		metrics.CurrentOdds = Odds{
+			A: totalStaked / float64(market.StakedA),
+			B: totalStaked / float64(market.StakedB),
+		}
+	} else {
+		metrics.CurrentOdds = Odds{A: 1.0, B: 1.0}
 	}
-	metrics.CurrentOdds = domainMarket.CalculateOdds()
 
 	// Set resolved timestamp if resolved
 	if market.Status == "resolved" {
@@ -265,7 +272,7 @@ func (a *Analytics) GetUserMetrics(ctx context.Context, userID string) (*UserMet
 	// Process positions
 	if len(positions) > 0 {
 		metrics.TotalBets = len(positions)
-		
+
 		var totalVolume uint64
 		var largestBet uint64
 		sideACounts := 0
@@ -278,8 +285,8 @@ func (a *Analytics) GetUserMetrics(ctx context.Context, userID string) (*UserMet
 			if pos.Amount > largestBet {
 				largestBet = pos.Amount
 			}
-			
-			if pos.Side == core.BetSideA {
+
+			if pos.Side == "A" {
 				sideACounts++
 			}
 
@@ -320,9 +327,9 @@ func (a *Analytics) GetUserMetrics(ctx context.Context, userID string) (*UserMet
 
 		// Determine favored side
 		if sideACounts > len(positions)/2 {
-			metrics.FavoredSide = core.BetSideA
+			metrics.FavoredSide = "A"
 		} else if sideACounts < len(positions)/2 {
-			metrics.FavoredSide = core.BetSideB
+			metrics.FavoredSide = "B"
 		} else {
 			metrics.FavoredSide = "balanced"
 		}
@@ -405,7 +412,7 @@ func (a *Analytics) ProcessDailyRollup(ctx context.Context, date time.Time) erro
 		return fmt.Errorf("failed to update analytics: %w", err)
 	}
 
-	a.logger.Info("daily rollup completed", 
+	a.logger.Info("daily rollup completed",
 		"date", startOfDay.Format("2006-01-02"),
 		"markets_created", analytics.MarketsCreated,
 		"bets_placed", analytics.BetsPlaced,
@@ -453,7 +460,7 @@ func (a *Analytics) GetPlatformOverview(ctx context.Context) (map[string]interfa
 
 	// Recent activity (last 24 hours)
 	last24h := time.Now().Add(-24 * time.Hour)
-	
+
 	var recentBets int64
 	db.Model(&PositionView{}).Where("created_at > ?", last24h).Count(&recentBets)
 	overview["recent_bets_24h"] = recentBets
@@ -551,7 +558,7 @@ func (a *Analytics) GetTopUsersByVolume(ctx context.Context, limit int) ([]UserM
 func (a *Analytics) TrackFunnelEvent(ctx context.Context, eventType, userID string, metadata map[string]interface{}) error {
 	// This would typically track events in a separate analytics table
 	// For now, just log the event
-	a.logger.Info("funnel event tracked", 
+	a.logger.Info("funnel event tracked",
 		"event_type", eventType,
 		"user_id", userID,
 		"metadata", metadata,
@@ -574,3 +581,4 @@ func (a *Analytics) GetFunnelMetrics(ctx context.Context, date time.Time) (*Funn
 func (a *Analytics) Health() error {
 	return a.repo.Health()
 }
+
