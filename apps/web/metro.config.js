@@ -50,14 +50,10 @@ config.resolver.blockList = [
   /packages\/.*\/node_modules\/.*/,
   // Ignore git and build directories
   /\.git\/.*/,
-  /\.expo\/.*/,
   /web-build\/.*/,
   /target\/.*/,
-  // Only ignore our dist folder, not node_modules dist folders
-  /^(?!.*node_modules).*\/dist\/.*/,
   // Ignore nested node_modules that cause issues
   /node_modules\/.*\/node_modules\/.*/,
-  // Don't block react-native-web dist folder
 ];
 
 module.exports = config;
