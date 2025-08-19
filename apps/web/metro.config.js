@@ -1,4 +1,4 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require('@expo/metro-config');
 const path = require('path');
 
 const config = getDefaultConfig(__dirname);
@@ -8,6 +8,8 @@ config.resolver.alias = {
   ...config.resolver.alias,
   'react-native-svg': 'react-native-svg-web',
   'react-native$': 'react-native-web',
+  // Fix specific react-native-web dist resolution issues
+  'react-native-web/dist/index': 'react-native-web/dist/index.js',
 };
 
 // Ensure web extensions are resolved first
@@ -15,6 +17,11 @@ config.resolver.platforms = ['web', 'native', 'ios', 'android'];
 
 // Set main fields for package resolution
 config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Add source extensions to help with resolution
+config.resolver.sourceExts = [...config.resolver.sourceExts];
+
+// Remove custom resolver to avoid SHA-1 issues
 
 // Add extensions for better resolution
 config.resolver.sourceExts = [
@@ -44,11 +51,13 @@ config.resolver.blockList = [
   // Ignore git and build directories
   /\.git\/.*/,
   /\.expo\/.*/,
-  /dist\/.*/,
   /web-build\/.*/,
   /target\/.*/,
+  // Only ignore our dist folder, not node_modules dist folders
+  /^(?!.*node_modules).*\/dist\/.*/,
   // Ignore nested node_modules that cause issues
   /node_modules\/.*\/node_modules\/.*/,
+  // Don't block react-native-web dist folder
 ];
 
 module.exports = config;

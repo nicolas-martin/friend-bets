@@ -38,16 +38,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Initialize logger
-	logger := setupLogger(*logLevel)
-	logger.Info("starting API server", "service", serviceName, "version", version)
-
-	// Load configuration
+	// Load configuration first
 	cfg, err := config.Load(*configFile)
 	if err != nil {
-		logger.Error("failed to load configuration", "error", err)
+		fmt.Printf("Failed to load configuration: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Initialize logger with config
+	logger := setupLogger(*logLevel, cfg)
+	logger.Info("starting API server", "service", serviceName, "version", version)
 
 	logger.Info("configuration loaded", "config_file", *configFile)
 
@@ -234,7 +234,7 @@ func stopServices(ctx context.Context, services *Services, logger *slog.Logger) 
 }
 
 // setupLogger configures the structured logger
-func setupLogger(level string) *slog.Logger {
+func setupLogger(level string, cfg *config.Config) *slog.Logger {
 	var logLevel slog.Level
 	switch level {
 	case "debug":
@@ -255,7 +255,7 @@ func setupLogger(level string) *slog.Logger {
 	}
 
 	var handler slog.Handler
-	if os.Getenv("ENV") == "development" {
+	if cfg.Environment == "development" {
 		// Pretty text logging for development
 		handler = slog.NewTextHandler(os.Stdout, opts)
 	} else {

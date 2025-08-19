@@ -9,12 +9,13 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Solana   SolanaConfig   `yaml:"solana"`
-	Worker   WorkerConfig   `yaml:"worker"`
-	Notify   NotifyConfig   `yaml:"notify"`
-	Rate     RateConfig     `yaml:"rate"`
+	Environment string         `yaml:"environment"`
+	Server      ServerConfig   `yaml:"server"`
+	Database    DatabaseConfig `yaml:"database"`
+	Solana      SolanaConfig   `yaml:"solana"`
+	Worker      WorkerConfig   `yaml:"worker"`
+	Notify      NotifyConfig   `yaml:"notify"`
+	Rate        RateConfig     `yaml:"rate"`
 }
 
 type ServerConfig struct {
@@ -95,6 +96,9 @@ func Load(path string) (*Config, error) {
 }
 
 func applyDefaults(cfg *Config) {
+	if cfg.Environment == "" {
+		cfg.Environment = "development"
+	}
 	if cfg.Server.Host == "" {
 		cfg.Server.Host = "localhost"
 	}
@@ -137,6 +141,9 @@ func applyDefaults(cfg *Config) {
 }
 
 func applyEnvOverrides(cfg *Config) {
+	if v := os.Getenv("ENV"); v != "" {
+		cfg.Environment = v
+	}
 	if v := os.Getenv("DATABASE_URL"); v != "" {
 		cfg.Database.URL = v
 	}

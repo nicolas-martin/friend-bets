@@ -1,12 +1,15 @@
 # Friend Bets Backend Configuration - Development
 
+# Environment configuration
+environment: development
+
 # Server configuration
 server:
     host: "localhost"
     port: 9000
     cors:
         allowed_origins:
-            - "http://localhost:9001" # Frontend development server on port 8083
+            - "http://localhost:9001" # Frontend development server on port 9001
             - "http://localhost:3000"
         allowed_headers:
             - "Authorization"

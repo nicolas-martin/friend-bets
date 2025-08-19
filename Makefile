@@ -30,10 +30,16 @@ dev: ## Run both backend and frontend in development mode (starts database first
 	@make backend & make frontend & wait
 
 backend: ## Run the Go backend server
+	@echo "Killing any existing process on port 9000..."
+	@lsof -ti:9000 | xargs kill -9 2>/dev/null || true
+	@sleep 1
 	cd apps/backend && go run cmd/api/main.go -config config.yaml
 
 frontend: ## Run the React Native web frontend
-	cd apps/web && npm run dev
+	@echo "Killing any existing process on port 9001..."
+	@lsof -ti:9001 | xargs kill -9 2>/dev/null || true
+	@sleep 1
+	cd apps/web && npx expo start --clear --web --port 9001
 
 solana-testnet: ## Set Solana CLI to testnet
 	solana config set --url $(NETWORK)
