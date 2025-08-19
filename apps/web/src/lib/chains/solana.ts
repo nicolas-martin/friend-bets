@@ -8,7 +8,8 @@ import {
 import {
 	getAssociatedTokenAddress,
 	getAccount,
-	getMint
+	getMint,
+	TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
 
 import {
