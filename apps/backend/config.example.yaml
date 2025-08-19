@@ -1,0 +1,138 @@
+# Friend Bets Backend Configuration
+# Copy this file to config.yaml and customize for your environment
+
+# Server configuration
+server:
+    host: "localhost"
+    port: 8080
+    cors:
+        allowed_origins:
+            - "http://localhost:3000" # Frontend development server
+            - "https://friend-bets.com" # Production frontend
+        allowed_headers:
+            - "Authorization"
+            - "Content-Type"
+            - "X-CSRF-Token"
+            - "X-Requested-With"
+
+# Database configuration
+database:
+    url: "postgres://user:password@localhost:5432/friend_bets?sslmode=disable"
+    max_conns: 25
+    max_idle_time: "30m"
+
+# Solana blockchain configuration
+solana:
+    rpc_url: "https://api.devnet.solana.com" # Use mainnet-beta for production
+    program_id: "YourAnchorProgramIdHere" # Your deployed Anchor program ID
+    maintenance_key_path: "./keys/maintenance-keypair.json" # Path to maintenance keypair
+    confirmation_mode: "confirmed" # confirmed, processed, or finalized
+
+# Background worker configuration
+worker:
+    enabled: true
+    check_interval_sec: 60 # How often to check for expired markets (seconds)
+    auto_close_enabled: true # Automatically close markets at end time
+    auto_cancel_enabled: true # Automatically cancel markets past resolve deadline
+    indexer_enabled: true # Enable Solana event indexing
+    indexer_start_slot: 0 # Slot to start indexing from (0 = from beginning)
+
+# Notification service configuration
+notify:
+    smtp:
+        host: "smtp.gmail.com"
+        port: 587
+        username: "your-email@gmail.com"
+        password: "your-app-password" # Use app password for Gmail
+        from: "Friend Bets <noreply@friend-bets.com>"
+    web_push:
+        enabled: false
+        vapid_key: "your-vapid-private-key"
+        vapid_email: "mailto:your-email@example.com"
+
+# Rate limiting configuration
+rate:
+    create_market_per_hour: 10 # Max markets a user can create per hour
+    place_bet_per_minute: 20 # Max bets a user can place per minute
+    ip_rate_per_minute: 100 # Max requests per IP per minute
+
+---
+# Development configuration overrides
+# Uncomment and modify as needed for local development
+
+# server:
+#   host: "0.0.0.0"  # Listen on all interfaces
+#   port: 8080
+#   cors:
+#     allowed_origins: ["*"]  # Allow all origins in development
+
+# database:
+#   url: "postgres://postgres:password@localhost:5432/friend_bets_dev?sslmode=disable"
+
+# solana:
+#   rpc_url: "http://127.0.0.1:8899"  # Local validator
+#   program_id: "11111111111111111111111111111111"  # Placeholder for development
+
+# worker:
+#   check_interval_sec: 10  # Check more frequently in development
+#   indexer_start_slot: 100000000  # Start from a recent slot
+
+# rate:
+#   create_market_per_hour: 1000  # Higher limits for development
+#   place_bet_per_minute: 1000
+#   ip_rate_per_minute: 1000
+
+---
+# Production configuration template
+# Use environment variables to override sensitive values
+
+# Example environment variables:
+# DATABASE_URL=postgres://user:password@db:5432/friend_bets
+# SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+# PROGRAM_ID=YourProductionProgramIdHere
+# MAINTENANCE_KEYPAIR_PATH=/app/keys/maintenance-keypair.json
+# SMTP_HOST=smtp.sendgrid.net
+# SMTP_PORT=587
+# SMTP_USERNAME=apikey
+# SMTP_PASSWORD=your-sendgrid-api-key
+
+# server:
+#   host: "0.0.0.0"
+#   port: 8080
+#   cors:
+#     allowed_origins:
+#       - "https://friend-bets.com"
+#       - "https://www.friend-bets.com"
+
+# database:
+#   url: "${DATABASE_URL}"
+#   max_conns: 50
+#   max_idle_time: "10m"
+
+# solana:
+#   rpc_url: "${SOLANA_RPC_URL}"
+#   program_id: "${PROGRAM_ID}"
+#   maintenance_key_path: "${MAINTENANCE_KEYPAIR_PATH}"
+#   confirmation_mode: "confirmed"
+
+# worker:
+#   enabled: true
+#   check_interval_sec: 60
+#   auto_close_enabled: true
+#   auto_cancel_enabled: true
+#   indexer_enabled: true
+#   indexer_start_slot: 0
+
+# notify:
+#   smtp:
+#     host: "${SMTP_HOST}"
+#     port: "${SMTP_PORT}"
+#     username: "${SMTP_USERNAME}"
+#     password: "${SMTP_PASSWORD}"
+#     from: "Friend Bets <noreply@friend-bets.com>"
+
+# rate:
+#   create_market_per_hour: 5
+#   place_bet_per_minute: 10
+#   ip_rate_per_minute: 60
+

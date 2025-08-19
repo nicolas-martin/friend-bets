@@ -1,0 +1,18 @@
+version: v2
+plugins:
+    # Go protobuf and Connect-Go
+    - remote: buf.build/protocolbuffers/go
+      out: apps/backend/gen/proto
+      opt: paths=source_relative
+    - remote: buf.build/connectrpc/go
+      out: apps/backend/gen/proto
+      opt: paths=source_relative
+
+    # TypeScript protobuf and Connect-Web
+    - remote: buf.build/bufbuild/es
+      out: packages/clients/ts-sdk/gen
+      opt: target=ts
+    - remote: buf.build/connectrpc/es
+      out: packages/clients/ts-sdk/gen
+      opt: target=ts
+

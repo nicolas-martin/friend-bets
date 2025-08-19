@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package bets.v1;
+
+option go_package = "github.com/friend-bets/backend/gen/proto/bets/v1;betsv1";
+
+// Side represents which side of a bet
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  SIDE_A = 1;
+  SIDE_B = 2;
+}
+
+// MarketStatus represents the current state of a market
+enum MarketStatus {
+  MARKET_STATUS_UNSPECIFIED = 0;
+  MARKET_STATUS_OPEN = 1;
+  MARKET_STATUS_PENDING_RESOLVE = 2;
+  MARKET_STATUS_RESOLVED = 3;
+  MARKET_STATUS_CANCELLED = 4;
+}

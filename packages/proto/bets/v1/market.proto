@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package bets.v1;
+
+import "bets/v1/common.proto";
+
+option go_package = "github.com/friend-bets/backend/gen/proto/bets/v1;betsv1";
+
+// Market represents a betting market
+message Market {
+  string id = 1;
+  string creator = 2;
+  string mint = 3;
+  string vault = 4;
+  uint32 fee_bps = 5;
+  int64 end_ts = 6;
+  int64 resolve_deadline_ts = 7;
+  uint64 staked_a = 8;
+  uint64 staked_b = 9;
+  MarketStatus status = 10;
+  Side outcome = 11;
+  bool creator_fee_withdrawn = 12;
+  string title = 13;
+  int64 created_at = 14;
+}
+
+// Position represents a user's bet position
+message Position {
+  string id = 1;
+  string market_id = 2;
+  string owner = 3;
+  Side side = 4;
+  uint64 amount = 5;
+  bool claimed = 6;
+  int64 created_at = 7;
+}
+
+// List markets request
+message ListMarketsRequest {
+  string title_filter = 1;
+  MarketStatus status_filter = 2;
+  uint32 page_size = 3;
+  string page_token = 4;
+}
+
+// List markets response
+message ListMarketsResponse {
+  repeated Market markets = 1;
+  string next_page_token = 2;
+}
+
+// Create market request
+message CreateMarketRequest {
+  uint32 fee_bps = 1;
+  int64 end_ts = 2;
+  int64 resolve_deadline_ts = 3;
+  string title = 4;
+  string creator = 5;
+  string mint = 6;
+}
+
+// Create market response
+message CreateMarketResponse {
+  string market_id = 1;
+  string unsigned_tx_base64 = 2; // For client signing
+  string signature = 3; // For dev/worker mode
+}
+
+// Place bet request
+message PlaceBetRequest {
+  string market_id = 1;
+  string owner = 2;
+  Side side = 3;
+  uint64 amount = 4;
+}
+
+// Place bet response
+message PlaceBetResponse {
+  string position_id = 1;
+  string unsigned_tx_base64 = 2; // For client signing
+  string signature = 3; // For dev/worker mode
+}
+
+// Resolve market request
+message ResolveRequest {
+  string market_id = 1;
+  string resolver = 2;
+  Side outcome = 3;
+}
+
+// Resolve market response
+message ResolveResponse {
+  string unsigned_tx_base64 = 1; // For client signing
+  string signature = 2; // For dev/worker mode
+}
+
+// Claim winnings request
+message ClaimRequest {
+  string market_id = 1;
+  string owner = 2;
+}
+
+// Claim winnings response
+message ClaimResponse {
+  uint64 payout_amount = 1;
+  string unsigned_tx_base64 = 2; // For client signing
+  string signature = 3; // For dev/worker mode
+}
+
+// Watch events request
+message WatchEventsRequest {
+  repeated string market_ids = 1;
+}
+
+// Event types
+message MarketEvent {
+  string id = 1;
+  string market_id = 2;
+  string event_type = 3;
+  string data = 4; // JSON-encoded event data
+  int64 timestamp = 5;
+  string tx_signature = 6;
+}
+
+// Watch events response (server streaming)
+message WatchEventsResponse {
+  MarketEvent event = 1;
+}
+
+// Get single market request
+message GetMarketRequest {
+  string market_id = 1;
+}
+
+// Get single market response
+message GetMarketResponse {
+  Market market = 1;
+}
+
+// Get position request
+message GetPositionRequest {
+  string market_id = 1;
+  string owner = 2;
+}
+
+// Get position response
+message GetPositionResponse {
+  Position position = 1;
+}
+
+// Get user positions request
+message GetUserPositionsRequest {
+  string owner = 1;
+  uint32 page_size = 2;
+  string page_token = 3;
+}
+
+// Get user positions response
+message GetUserPositionsResponse {
+  repeated Position positions = 1;
+  string next_page_token = 2;
+}
+
+// BetsService provides betting market functionality
+service BetsService {
+  // List available markets
+  rpc ListMarkets(ListMarketsRequest) returns (ListMarketsResponse) {}
+  
+  // Get a single market by ID
+  rpc GetMarket(GetMarketRequest) returns (GetMarketResponse) {}
+  
+  // Create a new market
+  rpc CreateMarket(CreateMarketRequest) returns (CreateMarketResponse) {}
+  
+  // Place a bet on a market
+  rpc PlaceBet(PlaceBetRequest) returns (PlaceBetResponse) {}
+  
+  // Resolve a market outcome
+  rpc Resolve(ResolveRequest) returns (ResolveResponse) {}
+  
+  // Claim winnings from a resolved market
+  rpc Claim(ClaimRequest) returns (ClaimResponse) {}
+  
+  // Get a user's position in a specific market
+  rpc GetPosition(GetPositionRequest) returns (GetPositionResponse) {}
+  
+  // Get all positions for a user
+  rpc GetUserPositions(GetUserPositionsRequest) returns (GetUserPositionsResponse) {}
+  
+  // Watch market events (server streaming)
+  rpc WatchEvents(WatchEventsRequest) returns (stream WatchEventsResponse) {}
+}

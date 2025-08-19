@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Friend Bets",
+    "slug": "friend-bets-web",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "web": {
+            "alias": {
+              "react-native$": "react-native-web",
+              "react-native-svg": "react-native-svg-web"
+            }
+          }
+        }
+      ]
+    ],
+    "scheme": "friend-bets",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
