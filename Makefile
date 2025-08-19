@@ -2,11 +2,21 @@ NETWORK ?= https://api.testnet.solana.com
 PROGRAM_NAME ?= friends_bets
 IDL_OUT ?= packages/contracts/idl
 
-.PHONY: help solana-testnet build deploy idl proto init-market place-bet resolve claim close-betting cancel-expired
+.PHONY: help dev backend frontend solana-testnet build deploy idl proto init-market place-bet resolve claim close-betting cancel-expired
 
 help: ## Show available targets
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
+
+dev: ## Run both backend and frontend in development mode
+	@echo "Starting backend and frontend..."
+	@make backend & make frontend & wait
+
+backend: ## Run the Go backend server
+	cd apps/backend && go run cmd/api/main.go
+
+frontend: ## Run the React Native web frontend
+	cd apps/web && npm run dev
 
 solana-testnet: ## Set Solana CLI to testnet
 	solana config set --url $(NETWORK)

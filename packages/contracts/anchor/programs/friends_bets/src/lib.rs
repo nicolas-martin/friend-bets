@@ -644,4 +644,3 @@ pub enum ErrorCode {
     #[msg("Creator fee already withdrawn")]
     FeeAlreadyWithdrawn,
 }
-
