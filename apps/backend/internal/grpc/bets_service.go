@@ -134,16 +134,16 @@ func (s *BetsService) CreateMarket(
 		Title:             req.Msg.Title,
 	}
 
-	// Validate through use cases
-	market, err := s.useCases.CreateMarket(ctx, createReq)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("failed to create market: %w", err))
-	}
-
-	// Create Solana transaction
+	// Create Solana transaction first to ensure it's valid
 	txResult, err := s.solanaClient.CreateMarketTx(ctx, createReq)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create transaction: %w", err))
+	}
+
+	// Only create database record if Solana transaction succeeds
+	market, err := s.useCases.CreateMarket(ctx, createReq)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("failed to create market: %w", err))
 	}
 
 	s.logger.Info("market created", "market_id", market.ID, "creator", creator)

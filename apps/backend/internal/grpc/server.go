@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	connectcors "connectrpc.com/cors"
+	"github.com/friend-bets/backend/gen/proto/bets/v1/betsv1connect"
 	"github.com/friend-bets/backend/internal/config"
 	"github.com/friend-bets/backend/internal/core"
 	"github.com/friend-bets/backend/internal/notify"
 	"github.com/friend-bets/backend/internal/rate"
 	"github.com/friend-bets/backend/internal/solana"
 	"github.com/friend-bets/backend/internal/store"
-	"github.com/friend-bets/backend/gen/proto/bets/v1/betsv1connect"
+	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -56,7 +58,7 @@ func NewServer(
 func (s *Server) Start(ctx context.Context) error {
 	// Create main HTTP mux
 	mainMux := http.NewServeMux()
-	
+
 	// Create gRPC mux
 	grpcMux := http.NewServeMux()
 
@@ -72,8 +74,19 @@ func (s *Server) Start(ctx context.Context) error {
 	betsServicePath, betsServiceHandler := betsv1connect.NewBetsServiceHandler(betsService, interceptors)
 	grpcMux.Handle(betsServicePath, betsServiceHandler)
 
-	// Add gRPC endpoints with h2c wrapper
-	mainMux.Handle("/bets.v1.BetsService/", h2c.NewHandler(s.addCORS(grpcMux), &http2.Server{}))
+	// Add proper CORS wrapper
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:9001", "http://127.0.0.1:9001",
+		},
+		AllowedMethods:   connectcors.AllowedMethods(),
+		AllowedHeaders:   connectcors.AllowedHeaders(),
+		ExposedHeaders:   connectcors.ExposedHeaders(),
+		AllowCredentials: true,
+	})
+
+	// Add gRPC endpoints with h2c wrapper and CORS
+	mainMux.Handle("/bets.v1.BetsService/", h2c.NewHandler(c.Handler(grpcMux), &http2.Server{}))
 
 	// Add simple HTTP health check endpoint (no h2c wrapper)
 	mainMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -173,4 +186,3 @@ func (s *Server) Metrics() map[string]interface{} {
 		"timestamp":   time.Now().Unix(),
 	}
 }
-

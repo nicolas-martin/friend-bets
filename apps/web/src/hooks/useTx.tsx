@@ -42,7 +42,7 @@ export function useTx() {
       const request = {
         ...params,
         creator: publicKey.toString(),
-        mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC mint
+        mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU', // USDC mint on devnet
       };
 
       const response = await grpcClient.createMarket(request);
@@ -55,11 +55,24 @@ export function useTx() {
           throw new Error('Wallet does not support transaction signing');
         }
 
+        // Set recent blockhash and fee payer if not already set
+        const { blockhash } = await solanaAdapter.getRecentBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
+        // Use signTransaction (not signAndSendTransaction) to avoid network mismatch
         const signedTx = await signTransaction(transaction);
         const signature = await solanaAdapter.sendTransaction(signedTx);
         
         // Wait for confirmation
         await solanaAdapter.confirmTransaction(signature);
+        
+        // Log transaction details for debugging
+        const connection = solanaAdapter.getConnection();
+        const tx = await connection.getTransaction(signature, { maxSupportedTransactionVersion: 0 });
+        console.log("Transaction signature:", signature);
+        console.log("meta.err:", tx?.meta?.err);
+        console.log("logs:", tx?.meta?.logMessages);
         
         showSuccess('Market Created!', `Your prediction market is now live. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
         console.log('Market creation transaction:', signature);
@@ -100,10 +113,22 @@ export function useTx() {
           throw new Error('Wallet does not support transaction signing');
         }
 
+        // Set recent blockhash and fee payer if not already set
+        const { blockhash } = await solanaAdapter.getRecentBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
         const signedTx = await signTransaction(transaction);
         const signature = await solanaAdapter.sendTransaction(signedTx);
         
         await solanaAdapter.confirmTransaction(signature);
+        
+        // Log transaction details for debugging
+        const connection = solanaAdapter.getConnection();
+        const tx = await connection.getTransaction(signature, { maxSupportedTransactionVersion: 0 });
+        console.log("Transaction signature:", signature);
+        console.log("meta.err:", tx?.meta?.err);
+        console.log("logs:", tx?.meta?.logMessages);
         
         showSuccess('Bet Placed!', `Your bet on Side ${params.side === Side.SIDE_A ? 'A' : 'B'} has been submitted. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
         console.log('Bet transaction:', signature);
@@ -144,10 +169,22 @@ export function useTx() {
           throw new Error('Wallet does not support transaction signing');
         }
 
+        // Set recent blockhash and fee payer if not already set
+        const { blockhash } = await solanaAdapter.getRecentBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
         const signedTx = await signTransaction(transaction);
         const signature = await solanaAdapter.sendTransaction(signedTx);
         
         await solanaAdapter.confirmTransaction(signature);
+        
+        // Log transaction details for debugging
+        const connection = solanaAdapter.getConnection();
+        const tx = await connection.getTransaction(signature, { maxSupportedTransactionVersion: 0 });
+        console.log("Transaction signature:", signature);
+        console.log("meta.err:", tx?.meta?.err);
+        console.log("logs:", tx?.meta?.logMessages);
         
         showSuccess('Market Resolved!', `Side ${params.outcome === Side.SIDE_A ? 'A' : 'B'} has been declared the winner. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
         console.log('Resolve transaction:', signature);
@@ -185,10 +222,22 @@ export function useTx() {
           throw new Error('Wallet does not support transaction signing');
         }
 
+        // Set recent blockhash and fee payer if not already set
+        const { blockhash } = await solanaAdapter.getRecentBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
         const signedTx = await signTransaction(transaction);
         const signature = await solanaAdapter.sendTransaction(signedTx);
         
         await solanaAdapter.confirmTransaction(signature);
+        
+        // Log transaction details for debugging
+        const connection = solanaAdapter.getConnection();
+        const tx = await connection.getTransaction(signature, { maxSupportedTransactionVersion: 0 });
+        console.log("Transaction signature:", signature);
+        console.log("meta.err:", tx?.meta?.err);
+        console.log("logs:", tx?.meta?.logMessages);
         
         const payoutAmount = response.payoutAmount ? 
           (response.payoutAmount / Math.pow(10, 6)).toLocaleString() : '0';

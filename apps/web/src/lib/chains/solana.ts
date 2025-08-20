@@ -21,7 +21,7 @@ import {
 
 // Constants
 export const PROGRAM_ID = new PublicKey("BtNtmmrm3KHc5EmvednmUv43hxL8P3S2fsfPVpffx1Rt");
-export const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // USDC on devnet
+export const USDC_MINT = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"); // USDC on devnet
 
 // Types from the Anchor program
 export type BetSide = { a: {} } | { b: {} };
