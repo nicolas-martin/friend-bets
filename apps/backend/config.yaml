@@ -32,11 +32,11 @@ solana:
 
 # Background worker configuration
 worker:
-    enabled: false # Disable for development
+    enabled: true # Enable for development to process transactions
     check_interval_sec: 60
     auto_close_enabled: false
     auto_cancel_enabled: false
-    indexer_enabled: false
+    indexer_enabled: true # Enable indexer to process blockchain events
     indexer_start_slot: 0
 
 # Notification service configuration - disabled for dev

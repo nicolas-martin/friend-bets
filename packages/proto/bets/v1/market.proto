@@ -57,6 +57,7 @@ message CreateMarketRequest {
   string title = 4;
   string creator = 5;
   string mint = 6;
+  string market_id = 7; // On-chain PDA address
 }
 
 // Create market response

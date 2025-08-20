@@ -72,6 +72,7 @@ export interface CreateMarketRequest {
   title: string;
   creator: string;
   mint: string;
+  marketId: string; // On-chain PDA address
 }
 
 export interface CreateMarketResponse {
@@ -232,6 +233,32 @@ class ConnectBetsService implements BetsService {
     };
   }
 
+  private convertStatusStringToEnum(status: string): MarketStatus {
+    switch (status) {
+      case 'MARKET_STATUS_OPEN':
+        return MarketStatus.MARKET_STATUS_OPEN;
+      case 'MARKET_STATUS_PENDING_RESOLVE':
+        return MarketStatus.MARKET_STATUS_PENDING_RESOLVE;
+      case 'MARKET_STATUS_RESOLVED':
+        return MarketStatus.MARKET_STATUS_RESOLVED;
+      case 'MARKET_STATUS_CANCELLED':
+        return MarketStatus.MARKET_STATUS_CANCELLED;
+      default:
+        return MarketStatus.MARKET_STATUS_UNSPECIFIED;
+    }
+  }
+
+  private convertSideStringToEnum(side: string): Side {
+    switch (side) {
+      case 'SIDE_A':
+        return Side.SIDE_A;
+      case 'SIDE_B':
+        return Side.SIDE_B;
+      default:
+        return Side.SIDE_UNSPECIFIED;
+    }
+  }
+
   async listMarkets(request: ListMarketsRequest): Promise<ListMarketsResponse> {
     try {
       const response = await this.client.makeRequest('ListMarkets', {
@@ -241,8 +268,16 @@ class ConnectBetsService implements BetsService {
         pageToken: request.pageToken || '',
       });
 
+      // Convert string enums to numeric enums for all markets
+      const markets = response.markets || [];
+      markets.forEach((market: any) => {
+        if (market && typeof market.status === 'string') {
+          market.status = this.convertStatusStringToEnum(market.status);
+        }
+      });
+
       return {
-        markets: response.markets || [],
+        markets: markets,
         nextPageToken: response.nextPageToken,
       };
     } catch (error) {
@@ -257,8 +292,14 @@ class ConnectBetsService implements BetsService {
         marketId: request.marketId,
       });
 
+      // Convert string enum to numeric enum
+      const market = response.market;
+      if (market && typeof market.status === 'string') {
+        market.status = this.convertStatusStringToEnum(market.status);
+      }
+
       return {
-        market: response.market,
+        market: market,
       };
     } catch (error) {
       console.error('Failed to get market:', error);
@@ -299,6 +340,12 @@ class ConnectBetsService implements BetsService {
   async getPosition(request: GetPositionRequest): Promise<GetPositionResponse> {
     try {
       const response = await this.client.makeRequest('GetPosition', request);
+      
+      // Convert side enum if needed
+      if (response.position && typeof response.position.side === 'string') {
+        response.position.side = this.convertSideStringToEnum(response.position.side);
+      }
+      
       return response;
     } catch (error) {
       console.error('Failed to get position:', error);
@@ -314,8 +361,16 @@ class ConnectBetsService implements BetsService {
         pageToken: request.pageToken || '',
       });
 
+      // Convert side enums for all positions
+      const positions = response.positions || [];
+      positions.forEach((position: any) => {
+        if (position && typeof position.side === 'string') {
+          position.side = this.convertSideStringToEnum(position.side);
+        }
+      });
+
       return {
-        positions: response.positions || [],
+        positions: positions,
         nextPageToken: response.nextPageToken,
       };
     } catch (error) {

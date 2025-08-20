@@ -39,6 +39,7 @@ func NewAnchorClient(cfg *config.SolanaConfig, logger *slog.Logger) (*AnchorClie
 type TransactionResult struct {
 	UnsignedTxBase64 string
 	Signature        string // Only populated in dev mode
+	MarketID         string // Market public key for created markets
 }
 
 // CreateMarketTx creates an unsigned transaction for market creation
@@ -93,7 +94,15 @@ func (ac *AnchorClient) CreateMarketTx(ctx context.Context, req *core.CreateMark
 		Data: instrData,
 	}
 
-	return ac.buildTransaction(ctx, []types.Instruction{instruction}, creator)
+	result, err := ac.buildTransaction(ctx, []types.Instruction{instruction}, creator)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Set the market ID for the result
+	result.MarketID = marketPDA.ToBase58()
+	
+	return result, nil
 }
 
 // PlaceBetTx creates an unsigned transaction for placing a bet

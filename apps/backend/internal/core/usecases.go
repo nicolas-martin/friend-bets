@@ -41,8 +41,11 @@ func (uc *UseCases) CreateMarket(ctx context.Context, req *CreateMarketRequest) 
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
-	// Generate market ID
-	marketID := generateMarketID()
+	// Use provided market ID (on-chain PDA) or generate one if not provided
+	marketID := req.MarketID
+	if marketID == "" {
+		marketID = generateMarketID()
+	}
 
 	// Create market domain object
 	market := &Market{
@@ -442,6 +445,7 @@ func (uc *UseCases) processCreatorFeeWithdrawn(event *MarketEvent) error {
 	market.CreatorFeeWithdrawn = true
 	return uc.repo.UpdateMarket(market)
 }
+
 
 // Utility functions
 

@@ -112,7 +112,7 @@ func (s *BetsService) ListMarkets(
 	return connect.NewResponse(response), nil
 }
 
-// CreateMarket creates a new betting market
+// CreateMarket creates a new betting market record after successful on-chain transaction
 func (s *BetsService) CreateMarket(
 	ctx context.Context,
 	req *connect.Request[betsv1.CreateMarketRequest],
@@ -132,16 +132,10 @@ func (s *BetsService) CreateMarket(
 		EndTs:             time.Unix(req.Msg.EndTs, 0),
 		ResolveDeadlineTs: time.Unix(req.Msg.ResolveDeadlineTs, 0),
 		Title:             req.Msg.Title,
+		MarketID:          req.Msg.MarketId, // Use on-chain PDA as market ID
 	}
 
-	// Create Solana transaction first to ensure it's valid
-	txResult, err := s.solanaClient.CreateMarketTx(ctx, createReq)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create transaction: %w", err))
-	}
-
-	// TODO: Only create database record after transaction is confirmed on-chain
-	// For now, we still create it immediately but we should change this
+	// Create database record (transaction was already confirmed on-chain by frontend)
 	market, err := s.useCases.CreateMarket(ctx, createReq)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("failed to create market: %w", err))
@@ -160,8 +154,8 @@ func (s *BetsService) CreateMarket(
 
 	response := &betsv1.CreateMarketResponse{
 		MarketId:         market.ID,
-		UnsignedTxBase64: txResult.UnsignedTxBase64,
-		Signature:        txResult.Signature,
+		UnsignedTxBase64: "", // Not used in frontend-only flow
+		Signature:        "", // Not used in frontend-only flow
 	}
 
 	return connect.NewResponse(response), nil
@@ -198,16 +192,10 @@ func (s *BetsService) PlaceBet(
 		Amount:   req.Msg.Amount,
 	}
 
-	// Validate through use cases
+	// Create database record (transaction was already confirmed on-chain by frontend)
 	position, err := s.useCases.PlaceBet(ctx, betReq)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("failed to place bet: %w", err))
-	}
-
-	// Create Solana transaction
-	txResult, err := s.solanaClient.PlaceBetTx(ctx, betReq)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create transaction: %w", err))
 	}
 
 	s.logger.Info("bet placed", "position_id", position.ID, "market_id", req.Msg.MarketId, "owner", owner)
@@ -223,8 +211,8 @@ func (s *BetsService) PlaceBet(
 
 	response := &betsv1.PlaceBetResponse{
 		PositionId:       position.ID,
-		UnsignedTxBase64: txResult.UnsignedTxBase64,
-		Signature:        txResult.Signature,
+		UnsignedTxBase64: "", // Not used in frontend-only flow
+		Signature:        "", // Not used in frontend-only flow
 	}
 
 	return connect.NewResponse(response), nil
@@ -390,7 +378,8 @@ func (s *BetsService) GetPosition(
 	}
 
 	// Get position from use cases
-	position, err := s.useCases.GetPosition(ctx, req.Msg.MarketId, req.Msg.Owner)
+	owner := "mvp-user-" + req.Msg.Owner // Use owner from request for MVP
+	position, err := s.useCases.GetPosition(ctx, req.Msg.MarketId, owner)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("position not found: %w", err))
 	}
@@ -426,7 +415,8 @@ func (s *BetsService) GetUserPositions(
 	}
 
 	// Get positions from use cases
-	positions, err := s.useCases.GetUserPositionsWithPagination(ctx, req.Msg.Owner, limit, offset)
+	owner := "mvp-user-" + req.Msg.Owner // Use owner from request for MVP
+	positions, err := s.useCases.GetUserPositionsWithPagination(ctx, owner, limit, offset)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get user positions: %w", err))
 	}

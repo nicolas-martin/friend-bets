@@ -394,6 +394,7 @@ type CreateMarketRequest struct {
 	Title             string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
 	Creator           string                 `protobuf:"bytes,5,opt,name=creator,proto3" json:"creator,omitempty"`
 	Mint              string                 `protobuf:"bytes,6,opt,name=mint,proto3" json:"mint,omitempty"`
+	MarketId          string                 `protobuf:"bytes,7,opt,name=market_id,json=marketId,proto3" json:"market_id,omitempty"` // On-chain PDA address
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -466,6 +467,13 @@ func (x *CreateMarketRequest) GetCreator() string {
 func (x *CreateMarketRequest) GetMint() string {
 	if x != nil {
 		return x.Mint
+	}
+	return ""
+}
+
+func (x *CreateMarketRequest) GetMarketId() string {
+	if x != nil {
+		return x.MarketId
 	}
 	return ""
 }
@@ -1405,14 +1413,15 @@ const file_bets_v1_market_proto_rawDesc = "" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\"h\n" +
 	"\x13ListMarketsResponse\x12)\n" +
 	"\amarkets\x18\x01 \x03(\v2\x0f.bets.v1.MarketR\amarkets\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xb9\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xd6\x01\n" +
 	"\x13CreateMarketRequest\x12\x17\n" +
 	"\afee_bps\x18\x01 \x01(\rR\x06feeBps\x12\x15\n" +
 	"\x06end_ts\x18\x02 \x01(\x03R\x05endTs\x12.\n" +
 	"\x13resolve_deadline_ts\x18\x03 \x01(\x03R\x11resolveDeadlineTs\x12\x14\n" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12\x18\n" +
 	"\acreator\x18\x05 \x01(\tR\acreator\x12\x12\n" +
-	"\x04mint\x18\x06 \x01(\tR\x04mint\"\x7f\n" +
+	"\x04mint\x18\x06 \x01(\tR\x04mint\x12\x1b\n" +
+	"\tmarket_id\x18\a \x01(\tR\bmarketId\"\x7f\n" +
 	"\x14CreateMarketResponse\x12\x1b\n" +
 	"\tmarket_id\x18\x01 \x01(\tR\bmarketId\x12,\n" +
 	"\x12unsigned_tx_base64\x18\x02 \x01(\tR\x10unsignedTxBase64\x12\x1c\n" +

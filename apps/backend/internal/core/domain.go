@@ -93,6 +93,7 @@ type CreateMarketRequest struct {
 	EndTs             time.Time
 	ResolveDeadlineTs time.Time
 	Title             string
+	MarketID          string // On-chain PDA address
 }
 
 // PlaceBetRequest represents a request to place a bet

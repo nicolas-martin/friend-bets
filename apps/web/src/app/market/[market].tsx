@@ -15,6 +15,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 
 import { useMarket } from '@/hooks/useMarket';
 import { usePosition } from '@/hooks/usePosition';
+import { useOnChainMarket } from '@/hooks/useOnChainMarket';
+import { useOnChainPosition } from '@/hooks/useOnChainPosition';
 import { useTx } from '@/hooks/useTx';
 import { useOddsPreview } from '@/hooks/useOddsPreview';
 import { MarketCard } from '@/components/MarketCard';
@@ -25,6 +27,7 @@ import { SideSelector } from '@/components/SideSelector';
 import { Countdown } from '@/components/Countdown';
 import { TxButton } from '@/components/TxButton';
 import { CopyField } from '@/components/CopyField';
+import { OnChainTest } from '@/components/OnChainTest';
 import { MarketStatus, Side } from '@/lib/grpc';
 import { BET_SIDE_A, BET_SIDE_B, betSideToString } from '@/lib/chains/solana';
 
@@ -36,6 +39,7 @@ export default function MarketDetailScreen() {
   const [selectedSide, setSelectedSide] = useState<'A' | 'B'>('A');
   const [betAmount, setBetAmount] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showOnChainData, setShowOnChainData] = useState(false);
 
   const {
     data: market,
@@ -50,6 +54,17 @@ export default function MarketDetailScreen() {
     isLoading: positionLoading,
     refetch: refetchPosition,
   } = usePosition(marketId, publicKey?.toString());
+
+  // On-chain data (source of truth)
+  const {
+    data: onChainMarket,
+    isLoading: onChainMarketLoading,
+  } = useOnChainMarket(marketId || '');
+
+  const {
+    data: onChainPosition,
+    isLoading: onChainPositionLoading,
+  } = useOnChainPosition(marketId || '', publicKey?.toBase58() || '');
 
   const { placeBet, claim, isLoading: txLoading } = useTx();
   
@@ -130,9 +145,22 @@ export default function MarketDetailScreen() {
     );
   }
 
-  const totalStaked = (market.stakedA || 0) + (market.stakedB || 0);
-  const sideAPercent = totalStaked > 0 ? (market.stakedA / totalStaked) * 100 : 50;
-  const sideBPercent = totalStaked > 0 ? (market.stakedB / totalStaked) * 100 : 50;
+  // Use on-chain data for staking amounts (source of truth)
+  const onChainStakedA = onChainMarket?.stakedA || 0;
+  const onChainStakedB = onChainMarket?.stakedB || 0;
+  const onChainTotalStaked = onChainStakedA + onChainStakedB;
+  
+  // Fallback to backend data if on-chain data not available yet
+  const displayStakedA = onChainMarket ? onChainStakedA : (market.stakedA || 0);
+  const displayStakedB = onChainMarket ? onChainStakedB : (market.stakedB || 0);
+  const totalStaked = displayStakedA + displayStakedB;
+  
+  const sideAPercent = totalStaked > 0 ? (displayStakedA / totalStaked) * 100 : 50;
+  const sideBPercent = totalStaked > 0 ? (displayStakedB / totalStaked) * 100 : 50;
+
+  // Prefer on-chain position data over backend data
+  const displayPosition = onChainPosition || position;
+  const hasPosition = !!displayPosition;
 
   return (
     <ScrollView 
@@ -188,9 +216,22 @@ export default function MarketDetailScreen() {
         {/* Pool Status */}
         <Card style={{ marginBottom: 16 }}>
           <Card.Content>
-            <Text variant="titleMedium" style={{ marginBottom: 16 }}>
-              Pool Status
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text variant="titleMedium">
+                Pool Status
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {onChainMarket ? (
+                  <Text variant="bodySmall" style={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                    🔗 Live On-Chain
+                  </Text>
+                ) : (
+                  <Text variant="bodySmall" style={{ color: '#FF9800' }}>
+                    📊 Database
+                  </Text>
+                )}
+              </View>
+            </View>
             
             <View style={{ marginBottom: 12 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -198,7 +239,7 @@ export default function MarketDetailScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text variant="bodyMedium">{sideAPercent.toFixed(1)}%</Text>
                   <OddsPill 
-                    odds={totalStaked > 0 ? totalStaked / (market.stakedA || 1) : 1} 
+                    odds={totalStaked > 0 ? totalStaked / (displayStakedA || 1) : 1} 
                     style={{ marginLeft: 8 }}
                   />
                 </View>
@@ -223,7 +264,7 @@ export default function MarketDetailScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text variant="bodyMedium">{sideBPercent.toFixed(1)}%</Text>
                   <OddsPill 
-                    odds={totalStaked > 0 ? totalStaked / (market.stakedB || 1) : 1} 
+                    odds={totalStaked > 0 ? totalStaked / (displayStakedB || 1) : 1} 
                     style={{ marginLeft: 8 }}
                   />
                 </View>
@@ -260,7 +301,7 @@ export default function MarketDetailScreen() {
         </Card>
 
         {/* User Position */}
-        {position && (
+        {hasPosition && (
           <Card style={{ marginBottom: 16 }}>
             <Card.Content>
               <Text variant="titleMedium" style={{ marginBottom: 12 }}>
@@ -270,14 +311,21 @@ export default function MarketDetailScreen() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text variant="bodyMedium">Side:</Text>
                 <Chip size="small">
-                  Side {betSideToString(position.side)}
+                  Side {onChainPosition ? displayPosition.side : betSideToString(displayPosition.side)}
                 </Chip>
               </View>
               
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text variant="bodyMedium">Amount:</Text>
                 <Text variant="bodyMedium">
-                  {(position.amount / Math.pow(10, 6)).toLocaleString()} USDC
+                  {(displayPosition.amount / Math.pow(10, 6)).toLocaleString()} USDC
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text variant="bodySmall" style={{ color: '#666' }}>Data source:</Text>
+                <Text variant="bodySmall" style={{ color: onChainPosition ? '#4CAF50' : '#FF9800' }}>
+                  {onChainPosition ? '🔗 On-Chain' : '📊 Database'}
                 </Text>
               </View>
 
@@ -416,6 +464,27 @@ export default function MarketDetailScreen() {
                   </Text>
                 </View>
               </View>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Collapsible On-Chain Data Debug Section */}
+        <Card style={{ marginBottom: 16 }}>
+          <Card.Content>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text variant="titleMedium">🔗 On-Chain Data</Text>
+              <IconButton
+                icon={showOnChainData ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                onPress={() => setShowOnChainData(!showOnChainData)}
+              />
+            </View>
+            
+            {showOnChainData && (
+              <OnChainTest 
+                marketId={marketId || ''}
+                userAddress={publicKey?.toBase58()}
+              />
             )}
           </Card.Content>
         </Card>
