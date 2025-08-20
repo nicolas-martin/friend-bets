@@ -61,7 +61,8 @@ export function useTx() {
         // Wait for confirmation
         await solanaAdapter.confirmTransaction(signature);
         
-        showSuccess('Market Created!', 'Your prediction market is now live');
+        showSuccess('Market Created!', `Your prediction market is now live. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
+        console.log('Market creation transaction:', signature);
         return response.marketId;
       }
 
@@ -104,7 +105,8 @@ export function useTx() {
         
         await solanaAdapter.confirmTransaction(signature);
         
-        showSuccess('Bet Placed!', `Your bet on Side ${params.side === Side.SIDE_A ? 'A' : 'B'} has been submitted`);
+        showSuccess('Bet Placed!', `Your bet on Side ${params.side === Side.SIDE_A ? 'A' : 'B'} has been submitted. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
+        console.log('Bet transaction:', signature);
       } else {
         throw new Error('Failed to create bet transaction');
       }
@@ -147,7 +149,8 @@ export function useTx() {
         
         await solanaAdapter.confirmTransaction(signature);
         
-        showSuccess('Market Resolved!', `Side ${params.outcome === Side.SIDE_A ? 'A' : 'B'} has been declared the winner`);
+        showSuccess('Market Resolved!', `Side ${params.outcome === Side.SIDE_A ? 'A' : 'B'} has been declared the winner. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
+        console.log('Resolve transaction:', signature);
       } else {
         throw new Error('Failed to create resolve transaction');
       }
@@ -190,7 +193,8 @@ export function useTx() {
         const payoutAmount = response.payoutAmount ? 
           (response.payoutAmount / Math.pow(10, 6)).toLocaleString() : '0';
         
-        showSuccess('Winnings Claimed!', `You received ${payoutAmount} USDC`);
+        showSuccess('Winnings Claimed!', `You received ${payoutAmount} USDC. View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
+        console.log('Claim transaction:', signature);
       } else {
         throw new Error('Failed to create claim transaction');
       }

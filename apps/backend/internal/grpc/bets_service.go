@@ -117,10 +117,11 @@ func (s *BetsService) CreateMarket(
 	ctx context.Context,
 	req *connect.Request[betsv1.CreateMarketRequest],
 ) (*connect.Response[betsv1.CreateMarketResponse], error) {
-	// Extract creator from auth context
+	// Extract creator from auth context (MVP: use dummy value if not authenticated)
 	creator, ok := ctx.Value("user_id").(string)
 	if !ok || creator == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("user authentication required"))
+		// For MVP: use a default creator when auth is disabled
+		creator = "mvp-user-" + req.Msg.Creator // Use creator from request for MVP
 	}
 
 	// Create domain request
@@ -170,10 +171,11 @@ func (s *BetsService) PlaceBet(
 	ctx context.Context,
 	req *connect.Request[betsv1.PlaceBetRequest],
 ) (*connect.Response[betsv1.PlaceBetResponse], error) {
-	// Extract owner from auth context
+	// Extract owner from auth context (MVP: use dummy value if not authenticated)
 	owner, ok := ctx.Value("user_id").(string)
 	if !ok || owner == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("user authentication required"))
+		// For MVP: use a default owner when auth is disabled
+		owner = "mvp-user-" + req.Msg.Owner // Use owner from request for MVP
 	}
 
 	// Convert side
@@ -232,10 +234,11 @@ func (s *BetsService) Resolve(
 	ctx context.Context,
 	req *connect.Request[betsv1.ResolveRequest],
 ) (*connect.Response[betsv1.ResolveResponse], error) {
-	// Extract resolver from auth context
+	// Extract resolver from auth context (MVP: use dummy value if not authenticated)
 	resolver, ok := ctx.Value("user_id").(string)
 	if !ok || resolver == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("user authentication required"))
+		// For MVP: use a default resolver when auth is disabled
+		resolver = "mvp-user-" + req.Msg.Resolver // Use resolver from request for MVP
 	}
 
 	// Convert outcome
@@ -294,10 +297,11 @@ func (s *BetsService) Claim(
 	ctx context.Context,
 	req *connect.Request[betsv1.ClaimRequest],
 ) (*connect.Response[betsv1.ClaimResponse], error) {
-	// Extract owner from auth context
+	// Extract owner from auth context (MVP: use dummy value if not authenticated)
 	owner, ok := ctx.Value("user_id").(string)
 	if !ok || owner == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("user authentication required"))
+		// For MVP: use a default owner when auth is disabled
+		owner = "mvp-user-" + req.Msg.Owner // Use owner from request for MVP
 	}
 
 	// Create domain request
