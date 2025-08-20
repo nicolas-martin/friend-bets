@@ -140,7 +140,8 @@ func (s *BetsService) CreateMarket(
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create transaction: %w", err))
 	}
 
-	// Only create database record if Solana transaction succeeds
+	// TODO: Only create database record after transaction is confirmed on-chain
+	// For now, we still create it immediately but we should change this
 	market, err := s.useCases.CreateMarket(ctx, createReq)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("failed to create market: %w", err))

@@ -29,6 +29,11 @@ func NewUseCases(repo *store.Repository, cfg *config.Config, logger *slog.Logger
 
 // Market Use Cases
 
+// ValidateCreateMarket validates a market creation request without persisting it
+func (uc *UseCases) ValidateCreateMarket(ctx context.Context, req *CreateMarketRequest) error {
+	return ValidateCreateMarket(req)
+}
+
 // CreateMarket creates a new betting market
 func (uc *UseCases) CreateMarket(ctx context.Context, req *CreateMarketRequest) (*Market, error) {
 	// Validate request

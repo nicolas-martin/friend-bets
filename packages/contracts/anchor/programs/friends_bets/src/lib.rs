@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::keccak;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
@@ -13,6 +14,7 @@ pub mod friends_bets {
 
     pub fn initialize_market(
         ctx: Context<InitializeMarket>,
+        market_id: u64,
         fee_bps: u16,
         end_ts: i64,
         resolve_deadline_ts: i64,
@@ -29,6 +31,7 @@ pub mod friends_bets {
         let market = &mut ctx.accounts.market;
         let vault = &ctx.accounts.vault;
 
+        market.market_id = market_id;
         market.creator = ctx.accounts.creator.key();
         market.mint = ctx.accounts.mint.key();
         market.vault = vault.key();
@@ -247,7 +250,7 @@ pub mod friends_bets {
             let seeds = &[
                 b"market",
                 market.creator.as_ref(),
-                market.mint.as_ref(),
+                &market.market_id.to_le_bytes(),
                 &[market.bump],
             ];
             let signer = &[&seeds[..]];
@@ -305,12 +308,12 @@ pub mod friends_bets {
             // Transfer fee from vault to creator
             let _market_key = market.key();
             let market_creator = market.creator;
-            let market_mint = market.mint;
+            let market_id = market.market_id;
             let market_bump = market.bump;
             let seeds = &[
                 b"market",
                 market_creator.as_ref(),
-                market_mint.as_ref(),
+                &market_id.to_le_bytes(),
                 &[market_bump],
             ];
             let signer = &[&seeds[..]];
@@ -340,7 +343,7 @@ pub mod friends_bets {
 }
 
 #[derive(Accounts)]
-#[instruction(fee_bps: u16, end_ts: i64, resolve_deadline_ts: i64, title: String)]
+#[instruction(market_id: u64, fee_bps: u16, end_ts: i64, resolve_deadline_ts: i64, title: String)]
 pub struct InitializeMarket<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
@@ -349,7 +352,7 @@ pub struct InitializeMarket<'info> {
         init,
         payer = creator,
         space = Market::LEN,
-        seeds = [b"market", creator.key().as_ref(), mint.key().as_ref()],
+        seeds = [b"market", creator.key().as_ref(), &market_id.to_le_bytes()],
         bump
     )]
     pub market: Account<'info, Market>,
@@ -491,6 +494,7 @@ pub struct WithdrawCreatorFee<'info> {
 
 #[account]
 pub struct Market {
+    pub market_id: u64,
     pub creator: Pubkey,
     pub mint: Pubkey,
     pub vault: Pubkey,
@@ -509,6 +513,7 @@ pub struct Market {
 
 impl Market {
     const LEN: usize = 8 + // discriminator
+        8 + // market_id
         32 + // creator
         32 + // mint
         32 + // vault
@@ -648,4 +653,6 @@ pub enum ErrorCode {
     UnauthorizedWithdrawal,
     #[msg("Creator fee already withdrawn")]
     FeeAlreadyWithdrawn,
+    #[msg("Invalid market PDA")]
+    InvalidMarketPda,
 }

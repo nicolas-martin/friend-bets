@@ -135,6 +135,21 @@ export interface ClaimResponse {
   signature?: string;
 }
 
+export interface ConfirmMarketRequest {
+  txSignature: string;
+  creator: string;
+  mint: string;
+  feeBps: number;
+  endTs: number;
+  resolveDeadlineTs: number;
+  title: string;
+}
+
+export interface ConfirmMarketResponse {
+  marketId: string;
+  success: boolean;
+}
+
 export interface WatchEventsRequest {
   marketIds?: string[];
 }
@@ -157,6 +172,7 @@ export interface BetsService {
   listMarkets(request: ListMarketsRequest): Promise<ListMarketsResponse>;
   getMarket(request: GetMarketRequest): Promise<GetMarketResponse>;
   createMarket(request: CreateMarketRequest): Promise<CreateMarketResponse>;
+  confirmMarket(request: ConfirmMarketRequest): Promise<ConfirmMarketResponse>;
   placeBet(request: PlaceBetRequest): Promise<PlaceBetResponse>;
   getPosition(request: GetPositionRequest): Promise<GetPositionResponse>;
   getUserPositions(request: GetUserPositionsRequest): Promise<GetUserPositionsResponse>;
@@ -257,6 +273,16 @@ class ConnectBetsService implements BetsService {
     } catch (error) {
       console.error('Failed to create market:', error);
       throw new Error('Failed to create market');
+    }
+  }
+
+  async confirmMarket(request: ConfirmMarketRequest): Promise<ConfirmMarketResponse> {
+    try {
+      const response = await this.client.makeRequest('ConfirmMarket', request);
+      return response;
+    } catch (error) {
+      console.error('Failed to confirm market:', error);
+      throw new Error('Failed to confirm market');
     }
   }
 

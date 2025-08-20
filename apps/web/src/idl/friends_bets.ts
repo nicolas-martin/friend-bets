@@ -1,6 +1,8 @@
-import idl from './friends_bets.json';
-import { Idl } from '@coral-xyz/anchor';
+import idlJson from './friends_bets.json';
 
-export const FRIENDS_BETS_IDL = idl as Idl;
-export { idl as friendsBetsIdl };
-export default idl;
+// Export the IDL directly - Anchor 0.30.1 supports the new format
+export const FRIENDS_BETS_IDL = idlJson;
+
+// For backward compatibility
+export { idlJson as friendsBetsIdl };
+export default FRIENDS_BETS_IDL;

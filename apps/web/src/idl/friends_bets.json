@@ -152,8 +152,8 @@
                 "path": "creator"
               },
               {
-                "kind": "account",
-                "path": "mint"
+                "kind": "arg",
+                "path": "market_id"
               }
             ]
           }
@@ -197,6 +197,10 @@
         }
       ],
       "args": [
+        {
+          "name": "market_id",
+          "type": "u64"
+        },
         {
           "name": "fee_bps",
           "type": "u16"
@@ -594,6 +598,11 @@
       "code": 6019,
       "name": "FeeAlreadyWithdrawn",
       "msg": "Creator fee already withdrawn"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidMarketPda",
+      "msg": "Invalid market PDA"
     }
   ],
   "types": [
@@ -708,6 +717,10 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "market_id",
+            "type": "u64"
+          },
           {
             "name": "creator",
             "type": "pubkey"
