@@ -5,3 +5,5 @@
   - make deploy - Deploys the smart contract to testnet
   - make proto - Generates protobuf types for Go and TypeScript
 
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH" && solana --version && anchor build
+

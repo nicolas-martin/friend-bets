@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("9wBsuUoZ4GD6YDvhVWabwUwF6SVjGWryVXKpPGUtrgrW");
+declare_id!("CqyLTBgj4mbZSowcMu97QWd1qQw86ZnTE3Qtb2YXvPVd");
 
 const MAX_FEE_BPS: u16 = 2000; // 20%
 const MAX_TITLE_LEN: usize = 64;

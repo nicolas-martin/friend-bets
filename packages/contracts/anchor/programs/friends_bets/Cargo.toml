@@ -1,5 +1,5 @@
 [package]
-name = "friends-bets"
+name = "friends_bets"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
@@ -9,12 +9,15 @@ crate-type = ["cdylib", "lib"]
 name = "friends_bets"
 
 [features]
+default = []
+cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
-cpi = ["no-entrypoint"]
-default = []
+idl-build = ["anchor-lang/idl-build"]
+
 
 [dependencies]
-anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-lang = "0.31.1"
 anchor-spl = "0.31.1"
+
