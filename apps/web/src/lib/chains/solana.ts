@@ -20,7 +20,7 @@ import {
 } from './adapter';
 
 // Constants
-export const PROGRAM_ID = new PublicKey("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+export const PROGRAM_ID = new PublicKey("BtNtmmrm3KHc5EmvednmUv43hxL8P3S2fsfPVpffx1Rt");
 export const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // USDC on devnet
 
 // Types from the Anchor program

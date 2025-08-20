@@ -1,6 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 
-export const PROGRAM_ID = new PublicKey("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+export const PROGRAM_ID = new PublicKey("BtNtmmrm3KHc5EmvednmUv43hxL8P3S2fsfPVpffx1Rt");
 
 /**
  * Derives the market PDA

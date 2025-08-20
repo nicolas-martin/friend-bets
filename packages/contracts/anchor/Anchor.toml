@@ -8,13 +8,16 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-friends_bets = "CqyLTBgj4mbZSowcMu97QWd1qQw86ZnTE3Qtb2YXvPVd"
+friends_bets = "BtNtmmrm3KHc5EmvednmUv43hxL8P3S2fsfPVpffx1Rt"
+
+[programs.devnet]
+friends_bets = "BtNtmmrm3KHc5EmvednmUv43hxL8P3S2fsfPVpffx1Rt"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

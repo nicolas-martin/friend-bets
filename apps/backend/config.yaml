@@ -26,7 +26,7 @@ database:
 # Solana blockchain configuration
 solana:
     rpc_url: "https://api.devnet.solana.com"
-    program_id: "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS" # From solana.ts
+    program_id: "BtNtmmrm3KHc5EmvednmUv43hxL8P3S2fsfPVpffx1Rt" # From solana.ts
     maintenance_key_path: "./keys/maintenance-keypair.json"
     confirmation_mode: "confirmed"
 
