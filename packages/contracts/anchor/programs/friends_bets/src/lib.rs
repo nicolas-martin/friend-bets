@@ -101,14 +101,24 @@ pub mod friends_bets {
         }
 
         // Update position
-        position.owner = ctx.accounts.user.key();
-        position.side = side;
+        // If position is already initialized, check that user is betting on the same side
+        // Otherwise, initialize the position
+        if position.amount > 0 {
+            require!(
+                position.side == side,
+                ErrorCode::BetOnBothSidesNotAllowed
+            );
+        } else {
+            position.owner = ctx.accounts.user.key();
+            position.side = side;
+            position.claimed = false;
+            position.bump = ctx.bumps.position;
+        }
+
         position.amount = position
             .amount
             .checked_add(amount)
             .ok_or(ErrorCode::Overflow)?;
-        position.claimed = false;
-        position.bump = ctx.bumps.position;
 
         emit!(BetPlaced {
             market: market.key(),
@@ -655,4 +665,6 @@ pub enum ErrorCode {
     FeeAlreadyWithdrawn,
     #[msg("Invalid market PDA")]
     InvalidMarketPda,
+    #[msg("User cannot bet on opposing sides in the same market")]
+    BetOnBothSidesNotAllowed,
 }
